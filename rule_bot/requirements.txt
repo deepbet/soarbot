@@ -1,0 +1,5 @@
+PyPokerEngine
+
+# tests
+flake8
+pytest
