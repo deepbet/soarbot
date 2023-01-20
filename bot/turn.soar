@@ -1,0 +1,565 @@
+
+# --------------------------------------------------------------------
+# turn - fourth board card. Third stage in the game.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Elaborate turn-strength based on analysis.
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*pair-with-overcard*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 5)
+	(<an> ^pair-with-overcard yes
+		  # Any obvious dangers?
+		 -^pair-on-board yes
+		 -^2-pair-on-board yes
+		 -^trips-on-board yes
+	 	 -^4-straight-on-board yes
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 4)
+}   
+
+sp  {turn*elaborate*turn-strength*pair-with-overcard*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 5)
+	(<an> ^pair-with-overcard yes)
+-->
+	(<g> ^turn-strength 7)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*high-pair
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis.high-pair yes
+		 ^pot-odds >= 5)
+-->
+	(<g> ^turn-strength 7)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*top-pair*no-danger
+    (state <s> ^name turn
+		   	   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^top-pair yes
+	  	  # Any obvious dangers?
+ 		 -^pair-on-board yes
+		 -^2-pair-on-board yes
+		 -^trips-on-board yes
+	 	 -^4-straight-on-board yes
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+sp  {turn*elaborate*turn-strength*top-pair*danger
+    (state <s> ^name turn
+		   	   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 5)
+	(<an> ^top-pair yes)
+-->
+	(<g> ^turn-strength 6)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*2-pair*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^2-pair yes
+	  	  # Any obvious dangers?
+		 -^trips-on-board yes
+	 	 -^4-straight-on-board yes
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+sp  {turn*elaborate*turn-strength*2-pair*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+ 		 ^pot-odds >= 3)
+	(<an> ^2-pair yes)
+-->
+	(<g> ^turn-strength 6)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*top-2-pair*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^top-2-pair yes
+	  	  # Any obvious dangers?
+		 -^trips-on-board yes
+	 	 -^4-straight-on-board yes
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 2)
+}   
+
+sp  {turn*elaborate*turn-strength*top-2-pair*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+ 		 ^pot-odds >= 3)
+	(<an> ^top-2-pair yes)
+-->
+	(<g> ^turn-strength 5)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*trips-with-hole-card*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^trips-with-hole-card yes 
+		  # Any obvious dangers?
+	 	 -^4-straight-on-board yes
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 1)
+}   
+
+sp  {turn*elaborate*turn-strength*trips-with-hole-card*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^trips-with-hole-card yes)
+-->
+	(<g> ^turn-strength 2)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*straight*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^straight yes
+  		  # Any obvious dangers?
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 1)
+} 
+
+sp  {turn*elaborate*turn-strength*straight*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^straight yes)
+-->
+	(<g> ^turn-strength 4)
+} 
+
+sp  {turn*elaborate*turn-strength*4-straight*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 5)
+	(<an> ^4-straight yes
+  		  # Any obvious dangers?
+	 	 -^4-straight-on-board yes
+		 -^straight-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+sp  {turn*elaborate*turn-strength*4-straight*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 5)
+	(<an> ^4-straight yes)
+-->
+	(<g> ^turn-strength 6)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*flush-with-hole-card*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^flush-with-hole-card yes
+		  # Any obvious dangers?
+		 -^2-pair-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+ 		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 1)
+}   
+
+sp  {turn*elaborate*turn-strength*flush-with-hole-card*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^flush-with-hole-card yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+sp  {turn*elaborate*turn-strength*4-flush-with-hole-card*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 4)
+	(<an> ^4-flush-with-hole-card yes
+		  # Any obvious dangers?
+ 		 -^2-pair-on-board yes
+		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+ 		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+sp  {turn*elaborate*turn-strength*4-flush-with-hole-card*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 4)
+	(<an> ^4-flush-with-hole-card yes)
+-->
+	(<g> ^turn-strength 6)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*4-flush-and-4-straight*no_danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 3)
+	(<an> ^4-flush-with-hole-card yes
+		  ^4-straight yes
+  		  # Any obvious dangers?
+ 		 -^2-pair-on-board yes
+ 		 -^4-straight-on-board yes
+		 -^straight-on-board yes
+ 		 -^4-flush-on-board yes
+		 -^flush-on-board yes
+ 		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 1)
+}   
+
+sp  {turn*elaborate*turn-strength*4-flush-and-4-straight*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^pot-odds >= 3)
+	(<an> ^4-flush-with-hole-card yes
+		  ^4-straight yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*full-house-with-hole-card*no-danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^full-house-with-hole-card yes
+ 		  # Any obvious dangers?
+ 		 -^full-house-on-board yes
+		 -^4-of-a-kind-on-board yes)
+-->
+	(<g> ^turn-strength 1)
+}   
+
+sp  {turn*elaborate*turn-strength*full-house-with-hole-card*danger
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^full-house-with-hole-card yes)
+-->
+	(<g> ^turn-strength 3)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*4-of-a-kind-with-hole-card
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-of-a-kind-with-hole-card yes)
+-->
+	(<g> ^turn-strength 1)
+}   
+
+# --------------------------------------------------------------------
+# Semibluff - as per Sklansky and Malmuth, p. 35. Hands where we may
+# drive everyone out, and, if we don't, we have a good chance to improve.
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*semibluff*straight
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-straight yes
+		  ^pair yes)
+-->
+	(<g> ^turn-strength 2.5)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {turn*elaborate*turn-strength*semibluff*flush
+    (state <s> ^name turn
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-flush yes
+		  ^pair yes)
+-->
+	(<g> ^turn-strength 2.5)
+}   
+
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Propose operators based on turn-strength elaboration.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# check-raise proposal - Strongest hands, no bets yet, 
+# enough players after us for someone to make the first bet.
+# --------------------------------------------------------------------
+
+sp  {turn*propose*check-raise
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^check-raise-used no # Just once per game
+		 ^num-bets 0
+		 ^unacted >= 4
+		 ^turn-strength 1)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*check-raise
+         ^bet.action check-raise
+		 ^score 40)
+}   
+
+# --------------------------------------------------------------------
+# bet-raise proposal - If there's a bet or raise available to make. 
+# Strongest hands, whenever possible.
+# --------------------------------------------------------------------
+
+sp  {turn*propose*bet-raise*always
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^max-bets <mb>
+		 ^num-bets < <mb> # bet or raise available
+		 ^turn-strength 1)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*bet-raise*always
+         ^bet.action raise
+		 ^score 30)
+}   
+
+# --------------------------------------------------------------------
+# raise proposal - If there's just 1 bet and we have a very good hand,
+# raise.
+# --------------------------------------------------------------------
+
+sp  {turn*propose*raise*1-bet
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets 1
+		 ^turn-strength <= 2)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*bet-raise*1-bet
+         ^bet.action raise
+		 ^score 30)
+}   
+
+# --------------------------------------------------------------------
+# bet proposal - bet-first semibluff.
+# --------------------------------------------------------------------
+
+sp  {turn*propose*bet-first*semibluff
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets 0
+		 ^turn-strength <= 2.5)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*bet-first*semibluff
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# bet proposal - If no one else has bet yet, and we're in good
+# position, and the game is short-handed, bet. We have a hand 
+# we would normally call with, and we may be able to drive people out.
+# --------------------------------------------------------------------
+
+sp  {turn*propose*bet-first*late*short-handed
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets 0
+		 ^unacted <= 2 # No more than 1 player behind us
+	  	 ^num-active-players <= 3
+		 ^turn-strength <= 4)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*bet-first*late*short-handed
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# bet proposal - If no one else has bet yet, and we're in last
+# position, and the turn was a blank (no-help card), bet with mediocre cards. 
+# We may be able to drive people out, and the blank reduces the 
+# chance of a check-raise. 
+# --------------------------------------------------------------------
+
+sp  {turn*propose*bet-first*blank-on-board
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets 0
+		 ^unacted 1 # We're last
+	  	 ^analysis.blank-on-board yes
+		 ^turn-strength <= 7)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*bet-first*blank-on-board
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# call proposal - stay in with good cards.
+# --------------------------------------------------------------------
+ 
+sp  {turn*propose*call*good-cards
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^turn-strength <= 4)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*call*good-cards
+         ^bet.action call
+		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# call proposal - mediocre cards, but turn card was a blank (no help).
+# Defend against attempts to steal the pot.
+# --------------------------------------------------------------------
+ 
+sp  {turn*propose*call*blank-on-board
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^analysis.blank-on-board yes
+		 ^turn-strength <= 7)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*call*blank-on-board
+         ^bet.action call
+		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# call proposal - mediocre cards, but just 1 player. Defend against 
+# attempts to steal the pot.
+# --------------------------------------------------------------------
+
+sp  {turn*propose*call*just-1-player
+    (state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-active-players 2
+		 ^turn-strength <= 7)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name turn*call*just-1-player
+         ^bet.action call
+		 ^score 20)
+}   

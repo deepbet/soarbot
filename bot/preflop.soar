@@ -1,0 +1,338 @@
+
+# --------------------------------------------------------------------
+# preflop - the 2 hole cards. First stage in the game.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Elaborate preflop-strength based on hole cards.
+#
+# We may end up with multiple preflop-strength attributes. That's okay - 
+# when we propose operators, the strongest preflop-strength will override 
+# the weaker ones.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Pairs
+# --------------------------------------------------------------------
+
+sp  {preflop*elaborate*preflop-strength*pair-aces
+    (state <s> 	^name preflop
+			   	^io.input-link.game <g>)
+	(<g> ^card <hc1>
+		 ^card <hc2>)
+	(<hc1> ^type hole ^num 1 ^rank a)
+	(<hc2> ^type hole ^num 2 ^rank a)
+-->
+	(<g> ^preflop-strength 1)
+}   
+
+sp  {preflop*elaborate*preflop-strength*strong-pairs
+    (state <s> 	^name preflop
+			   	^io.input-link.game <g>)
+	(<g> ^card <hc1>
+		 ^card <hc2>)
+	(<hc1> ^type hole ^num 1 ^rank { << k q j t >> <r1> })
+	(<hc2> ^type hole ^num 2 ^rank <r1>)
+-->
+	(<g> ^preflop-strength 2)
+}
+
+sp  {preflop*elaborate*preflop-strength*weak-pairs
+    (state <s> 	^name preflop
+			   	^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^num 1 ^rank { <r1> <= 9 })
+	(<hc2> ^type hole ^num 2 ^rank <r1>)
+-->
+	(<g> ^preflop-strength 5)
+}   
+
+# --------------------------------------------------------------------
+# Suited cards - both hole cards are the same suit.
+# --------------------------------------------------------------------
+   
+sp  {preflop*elaborate*preflop-strength*ace-king-suited
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank a)
+	(<hc2> ^type hole ^suit <s1> ^rank k)
+-->
+	(<g> ^preflop-strength 1)
+} 
+
+sp  {preflop*elaborate*preflop-strength*2-high-cards-suited
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank { << a k q j >> <r1> } )
+	(<hc2> ^type hole ^suit <s1> ^rank { << a k q j >> <> <r1> })
+-->
+	(<g> ^preflop-strength 2)
+} 
+
+sp  {preflop*elaborate*preflop-strength*high-card-suited
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank << a k q j >> )
+	(<hc2> ^type hole ^suit <s1> ^rank-num <= 10)
+-->
+	(<g> ^preflop-strength 3)
+} 
+
+# Extra value because the cards are connected.
+sp  {preflop*elaborate*preflop-strength*10-9-suited
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank t)
+	(<hc2> ^type hole ^suit <s1> ^rank 9)
+-->
+	(<g> ^preflop-strength 3)
+} 
+
+# --------------------------------------------------------------------
+# Unpaired, unsuited
+# --------------------------------------------------------------------
+
+sp  {preflop*elaborate*preflop-strength*ace-king
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank a)
+	(<hc2> ^type hole ^suit { <s2> <> <s1> } ^rank k)
+-->
+	(<g> ^preflop-strength 2)
+} 
+
+sp  {preflop*elaborate*preflop-strength*ace-ten
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank a)
+	(<hc2> ^type hole ^suit { <s2> <> <s1> } ^rank t)
+-->
+	(<g> ^preflop-strength 3)
+} 
+
+sp  {preflop*elaborate*preflop-strength*2-high-cards
+    (state <s> 	^name preflop
+				^io.input-link.game <g>)
+	(<g> ^card <hc1>
+	     ^card <hc2>)
+	(<hc1> ^type hole ^suit <s1> ^rank { <r1> << a k q j >> })
+	(<hc2> ^type hole ^suit { <s2> <> <s1> } ^rank { << a k q j >> <> <r1> })
+-->
+	(<g> ^preflop-strength 3)
+} 
+
+# --------------------------------------------------------------------
+# check-raise proposals
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# If we've got the best cards, early position, and no bets yet,
+# check-raise.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*check-raise
+    (state <s> ^name preflop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets <= 1
+		 ^bet-timing early
+		 ^preflop-strength 1)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*check-raise
+         ^bet.action check-raise
+		 ^score 40)
+}   
+
+# --------------------------------------------------------------------
+# raise proposals
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# If we've got the best cards, bet-raise as much as possible.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*bet-raise*always
+    (state <s> ^name preflop
+               ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^max-bets <mb>
+		 ^num-bets < <mb>
+	     ^preflop-strength 1)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*bet-raise*always
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# If we've got excellent cards and excellent position, bet-raise as 
+# much as possible.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*bet-raise*excellent-both
+    (state <s> ^name preflop
+               ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^max-bets <mb>
+		 ^num-bets < <mb>
+		 ^bet-timing << late button >>
+	     ^preflop-strength <= 2)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*bet-raise*excellent-both
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# If we've got excellent cards, bet-raise once.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*bet-raise*excellent-cards
+    (state <s> ^name preflop
+               ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^num-bets <= 1
+	     ^preflop-strength <= 2)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*bet-raise*excellent-cards
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# If we've got decent cards and excellent position, bet-raise once.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*raise*excellent-position
+    (state <s> ^name preflop
+               ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^num-bets <= 1
+		 ^bet-timing << late button >>
+	     ^preflop-strength <= 3)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*raise*excellent-position
+         ^bet.action raise
+		 ^score 30)
+}   
+
+# --------------------------------------------------------------------
+# call proposals
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Decent cards - worth seeing the flop.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*call
+    (state <s> ^name preflop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^preflop-strength <= 3)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*call
+		 ^bet.action call
+   		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# call proposal - If bluff flag is set and we have good position, call.
+# The idea is to be less predictable by playing some cards we would 
+# normally toss.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*call*bluff
+    (state <s> ^name preflop
+               ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^bet-timing << late button >>
+	     ^bluff yes)
+-->
+	(write (crlf) |preflop bluff...|)
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*call*bluff
+         ^bet.action call
+		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# Weak pairs, strong position, low cost - try to hit trips.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*call*weak-pairs
+    (state <s> ^name preflop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^num-bets 1
+		 ^bet-timing << late button >>
+		 ^preflop-strength <= 5)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*call*weak-pairs
+		 ^bet.action call
+   		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# Weak pairs, small blind, half a bet - try to hit trips.
+# --------------------------------------------------------------------
+
+sp  {preflop*propose*call*weak-pairs*small-blind
+    (state <s> ^name preflop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^bets-to-call 0.5
+		 ^blind small
+		 ^preflop-strength <= 5)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name preflop*call*weak-pairs*small-blind
+		 ^bet.action call
+   		 ^score 20)
+}   

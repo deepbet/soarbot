@@ -1,0 +1,253 @@
+# -------------------------------------------------------------------
+# Bob Follek
+# bfollek@bigfoot.com
+# CS631V Spring 2002
+#
+# Solve the 8-queens problem using SOAR.
+# -------------------------------------------------------------------
+
+sp  {init*state
+    (state <s> ^superstate nil)
+-->
+    (<s> ^clock 0
+         ^valid-row 1 2 3 4 5 6 7 8
+         ^queen <q1> <q2> <q3> <q4> <q5> <q6> <q7> <q8>)
+	(<q1> ^name q1 ^col 1 ^row 1)
+	(<q2> ^name q2 ^col 2 ^row 5)
+	(<q3> ^name q3 ^col 3 ^row 2)
+	(<q4> ^name q4 ^col 4 ^row 1)
+	(<q5> ^name q5 ^col 5 ^row 4)
+	(<q6> ^name q6 ^col 6 ^row 4)
+	(<q7> ^name q7 ^col 7 ^row 8)
+	(<q8> ^name q8 ^col 8 ^row 2)
+}
+
+sp  {display*initial-position
+# -------------------------------------------------------------------
+# Display initial queen locations.
+# -------------------------------------------------------------------
+    (state <s> ^clock 0
+               ^queen <q1> <q2> <q3> <q4> <q5> <q6> <q7> <q8>)
+    (<q1> ^name q1 ^col <col1> ^row <row1>)
+    (<q2> ^name q2 ^col <col2> ^row <row2>)
+    (<q3> ^name q3 ^col <col3> ^row <row3>)
+    (<q4> ^name q4 ^col <col4> ^row <row4>)
+    (<q5> ^name q5 ^col <col5> ^row <row5>)
+    (<q6> ^name q6 ^col <col6> ^row <row6>)
+    (<q7> ^name q7 ^col <col7> ^row <row7>)
+    (<q8> ^name q8 ^col <col8> ^row <row8>)
+-->
+    (write (crlf) |Initial positions:|)
+    (write (crlf) |(| <col1> |,| <row1> |) (| <col2> |,| <row2> |) (| <col3> |,| <row3> |) (| <col4> |,| <row4> |)|)
+    (write (crlf) |(| <col5> |,| <row5> |) (| <col6> |,| <row6> |) (| <col7> |,| <row7> |) (| <col8> |,| <row8> |)|)
+}
+
+sp  {increment*clock
+# -------------------------------------------------------------------
+# This gives us a changing value we can use in proposals so that they
+# retract. Handy in other places as well.
+# -------------------------------------------------------------------
+    (state <s> ^clock <old-c>
+               ^operator <o>)
+-->
+    (<s> ^clock (+ <old-c> 1)
+                <old-c> - )
+}
+
+sp  {elaborate*queen-diagonals
+# -------------------------------------------------------------------
+# Each queen is on 2 diagonals, one from the southwest corner of the
+# board to the northeast corner, and one from the northwest corner to
+# the southeast corner. (col - row) yields a common value for all
+# queens on the same sw-to-ne diagonal; (col + row) yields a common
+# value for the nw-to-se diagonal. We need these common values to
+# recognize attacks.
+# -------------------------------------------------------------------
+    (state <s> ^queen <q>)
+    (<q> ^col <col> ^row <row>)
+-->
+    (<q> ^sw-to-ne (- <col> <row>)
+         ^nw-to-se (+ <col> <row>))
+}
+
+sp  {propose*move-queen
+# -------------------------------------------------------------------
+# Propose all possible moves: For each queen within its column, all
+# the rows it's not on.
+#
+# Also carry the state of the board, so that we can build history.
+# -------------------------------------------------------------------
+    (state <s> ^queen <q>
+                      <q1> <q2> <q3> <q4> <q5> <q6> <q7> <q8>
+               ^valid-row <v-row>)
+    (<q> ^name <q-name>
+         ^col <col>
+         ^row { <> <v-row> <row> } ) # Must move to a different row
+    (<q1> ^name q1 ^row <row1>)
+    (<q2> ^name q2 ^row <row2>)
+    (<q3> ^name q3 ^row <row3>)
+    (<q4> ^name q4 ^row <row4>)
+    (<q5> ^name q5 ^row <row5>)
+    (<q6> ^name q6 ^row <row6>)
+    (<q7> ^name q7 ^row <row7>)
+    (<q8> ^name q8 ^row <row8>)
+-->
+    (<s> ^operator <o> + =)
+    (<o> ^name move-queen
+         ^queen-name <q-name>
+         ^new-row <v-row>
+         # For preferences
+         ^new-sw-to-ne (- <col> <v-row>)
+         ^new-nw-to-se (+ <col> <v-row>)
+         # For move history
+         ^hist-row1 <row1> ^hist-row2 <row2> ^hist-row3 <row3> ^hist-row4 <row4>
+         ^hist-row5 <row5> ^hist-row6 <row6> ^hist-row7 <row7> ^hist-row8 <row8>)
+    #(write (crlf) |trace> Proposing move-queen for | <q-name> | from | <row> | to | <v-row>)
+}
+
+sp  {prefer*move*no-attackers
+# -------------------------------------------------------------------
+# If there is an acceptable move to a spot with no attackers, give it
+# best preference.
+# -------------------------------------------------------------------
+    (state <s> ^operator <o> +
+              -^queen.row <o-row>
+              -^queen.sw-to-ne <o-sw-to-ne>
+              -^queen.nw-to-se <o-nw-to-se>)
+    (<o> ^new-row <o-row>
+         ^new-sw-to-ne <o-sw-to-ne>
+         ^new-nw-to-se <o-nw-to-se>)
+-->
+    (<s> ^operator <o> > =)
+   #(write (crlf) |trace> Best preference found - no attackers|)
+}
+
+sp  {reject*duplicate-move
+# -------------------------------------------------------------------
+# If there is an acceptable move that we've done before with the board
+# in this state, reject it. Otherwise we may go into a loop.
+# -------------------------------------------------------------------
+    (state <s> ^operator <o> +
+               ^queen <q1> <q2> <q3> <q4> <q5> <q6> <q7> <q8>
+               ^move-history <mh>)
+    (<o> ^queen-name <o-q-name>
+         ^new-row <o-new-row>)
+    (<q1> ^name q1 ^row <row1>)
+    (<q2> ^name q2 ^row <row2>)
+    (<q3> ^name q3 ^row <row3>)
+    (<q4> ^name q4 ^row <row4>)
+    (<q5> ^name q5 ^row <row5>)
+    (<q6> ^name q6 ^row <row6>)
+    (<q7> ^name q7 ^row <row7>)
+    (<q8> ^name q8 ^row <row8>)
+    (<mh> ^queen-name <o-q-name>
+          ^new-row <o-new-row>
+          ^hist-row1 <row1> ^hist-row2 <row2> ^hist-row3 <row3> ^hist-row4 <row4>
+          ^hist-row5 <row5> ^hist-row6 <row6> ^hist-row7 <row7> ^hist-row8 <row8>)
+-->
+    (<s> ^operator <o> -)
+    #(write (crlf) |trace> Rejecting duplicate move|)
+}
+
+sp  {apply*move-queen
+# -------------------------------------------------------------------
+# Move queen within its column. Save historical info about the move
+# on the state.
+# -------------------------------------------------------------------
+    (state <s> ^operator <o>
+               ^clock <c>
+               ^queen <q>)
+    (<o> ^name move-queen
+         ^queen-name <q-name>
+         ^new-row <new-row>
+         ^hist-row1 <hr1> ^hist-row2 <hr2> ^hist-row3 <hr3> ^hist-row4 <hr4>
+         ^hist-row5 <hr5> ^hist-row6 <hr6> ^hist-row7 <hr7> ^hist-row8 <hr8>)
+    (<q> ^name <q-name>
+         ^row <old-row>)
+-->
+    # Save move history
+    (<s> ^move-history <mh>)
+    (<mh> ^timestamp <c>
+          ^queen-name <q-name>
+          ^new-row <new-row>
+          ^hist-row1 <hr1> ^hist-row2 <hr2> ^hist-row3 <hr3> ^hist-row4 <hr4>
+          ^hist-row5 <hr5> ^hist-row6 <hr6> ^hist-row7 <hr7> ^hist-row8 <hr8>)
+    # Make the move
+    (<q> ^row <new-row>
+            <old-row> - )
+    #(write (crlf) |trace> Applying move-queen for | <q> | from row==| <old-row> | to row==| <new-row>)
+}
+
+sp  {elaborate*attacks
+# -------------------------------------------------------------------
+# If there are 2 queens on the same row or diagonal,
+# put an attack augmentation on the state.
+#
+# "attack" is symmetrical - if q1 attacks q2, q2 attacks q1,
+# and we get 2 augmentations. But they both drop off when things
+# change - no problem.
+# -------------------------------------------------------------------
+    (state <s> ^queen <q1>
+               ^queen <q2>)
+    (<q1> ^name <q1-name> ^{ <att> << row sw-to-ne nw-to-se >> } <q1-value>)
+    (<q2> ^name { <> <q1-name> <q2-name> } ^<att> <q1-value>)
+-->
+    (<s> ^attack <a>)
+    (<a> ^victim <q1-name>
+         ^attacker <q2-name>
+         ^how <att>)
+}
+
+sp  {monitor*queens*on-off
+# -------------------------------------------------------------------
+# Turn monitor*queens on/off.
+# -------------------------------------------------------------------
+    (state <s>)
+-->
+    (<s> ^monitor-queens off)
+}
+
+sp  {monitor*queens
+# -------------------------------------------------------------------
+# Display current queen locations.
+# -------------------------------------------------------------------
+    (state <s> ^monitor-queens on
+               ^queen <q1> <q2> <q3> <q4> <q5> <q6> <q7> <q8>)
+    (<q1> ^name q1 ^col <col1> ^row <row1>)
+    (<q2> ^name q2 ^col <col2> ^row <row2>)
+    (<q3> ^name q3 ^col <col3> ^row <row3>)
+    (<q4> ^name q4 ^col <col4> ^row <row4>)
+    (<q5> ^name q5 ^col <col5> ^row <row5>)
+    (<q6> ^name q6 ^col <col6> ^row <row6>)
+    (<q7> ^name q7 ^col <col7> ^row <row7>)
+    (<q8> ^name q8 ^col <col8> ^row <row8>)
+-->
+    (write (crlf) |(| <col1> |,| <row1> |) (| <col2> |,| <row2> |) (| <col3> |,| <row3> |) (| <col4> |,| <row4> |)|)
+    (write (crlf) |(| <col5> |,| <row5> |) (| <col6> |,| <row6> |) (| <col7> |,| <row7> |) (| <col8> |,| <row8> |)|)
+}
+
+sp  {detect*goal
+# -------------------------------------------------------------------
+# If there are no attacks, goal! Print the locations of all queens
+# and halt.
+#
+# Match an operator to avoid spurious goal detection before any attack
+# augmentations are added.
+# -------------------------------------------------------------------
+    (state <s> ^queen <q1> <q2> <q3> <q4> <q5> <q6> <q7> <q8>
+               ^operator
+              -^attack)
+    (<q1> ^name q1 ^col <col1> ^row <row1>)
+    (<q2> ^name q2 ^col <col2> ^row <row2>)
+    (<q3> ^name q3 ^col <col3> ^row <row3>)
+    (<q4> ^name q4 ^col <col4> ^row <row4>)
+    (<q5> ^name q5 ^col <col5> ^row <row5>)
+    (<q6> ^name q6 ^col <col6> ^row <row6>)
+    (<q7> ^name q7 ^col <col7> ^row <row7>)
+    (<q8> ^name q8 ^col <col8> ^row <row8>)
+-->
+    (write (crlf) |Goal!|)
+    (write (crlf) |(| <col1> |,| <row1> |) (| <col2> |,| <row2> |) (| <col3> |,| <row3> |) (| <col4> |,| <row4> |)|)
+    (write (crlf) |(| <col5> |,| <row5> |) (| <col6> |,| <row6> |) (| <col7> |,| <row7> |) (| <col8> |,| <row8> |)|)
+    (halt)
+}

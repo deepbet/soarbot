@@ -1,0 +1,61 @@
+
+# --------------------------------------------------------------------
+# There are some operators we always want to propose for all states, like 
+# check*no-cost and fold*default.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# If there's no cost to staying in the game, check. (check == call
+# from the output-link point of view.)
+# --------------------------------------------------------------------
+ 
+sp  {propose*check*no-cost
+    (state <s> ^name << preflop flop turn river >>
+		       ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+	      ^game <g>)
+	(<g> ^bets-to-call 0.0)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name check*no-cost
+		 ^bet.action call
+		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# Always propose fold.
+# --------------------------------------------------------------------
+ 
+sp  {propose*fold*default
+    (state <s> ^name << preflop flop turn river >>
+         	   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name fold*default
+		 ^bet.action fold
+		 ^score 10)
+}  
+
+# --------------------------------------------------------------------
+# Always call - useful when you want to see every hand to the end, 
+# to gather data. A debugging tool. To use it, remove the minus sign
+# from the score.
+# --------------------------------------------------------------------
+ 
+sp  {propose*always*call
+    (state <s> ^name << preflop flop turn river >>
+         	   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name always*call
+		 ^bet.action call
+		 ^score -1000)
+}  

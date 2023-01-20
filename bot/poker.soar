@@ -1,0 +1,138 @@
+
+source pokerIo.tcl
+
+#Elaborations
+source analysis.soar
+source pokerElab.soar
+
+if {[info exists g_simulation]} {
+	source startLog.tcl
+	echo "\nSimulation mode"
+} else {
+	echo "\nInteractive testing/debugging mode"
+	source initGame.tcl
+	source aliases.soar
+	max-chunks 200
+}
+
+source pokerDebug.soar
+
+# Operators
+source defaultOps.soar
+source preflop.soar
+source flop.soar
+source turn.soar
+source river.soar
+
+# --------------------------------------------------------------------
+# Subgoal based on stage of the game.
+# --------------------------------------------------------------------
+
+sp  {elaborate*top*state*name
+	(state <s> ^superstate nil)
+-->
+	(<s> ^name poker)
+}
+
+# top state operator name becomes substate name
+sp	{elaborate*substate*name
+	(state <s> ^superstate.operator.name <name>)
+-->
+	(<s> ^name <name>)
+}
+
+# copy io link from top state to substate
+sp	{elaborate*substate*io
+	(state <s> ^superstate.io <io>)
+-->
+	(<s> ^io <io>)
+}
+
+sp	{propose*preflop
+	(state <s> ^name poker
+			   ^io.input-link <io>)
+	(<io> ^game <g>)
+	(<g> ^stage preflop)
+-->
+	(<s> ^operator <o>)
+	(<o> ^name preflop)
+}
+
+sp	{propose*flop
+	(state <s> ^name poker
+			   ^io.input-link <io>)
+	(<io> ^game <g>)
+	(<g> ^stage flop)
+-->
+	(<s> ^operator <o>)
+	(<o> ^name flop)
+}
+
+sp	{propose*turn
+	(state <s> ^name poker
+			   ^io.input-link <io>)
+	(<io> ^game <g>)
+	(<g> ^stage turn)
+-->
+	(<s> ^operator <o>)
+	(<o> ^name turn)
+}
+
+sp	{propose*river
+	(state <s> ^name poker
+			   ^io.input-link <io>)
+	(<io> ^game <g>)
+	(<g> ^stage river)
+-->
+	(<s> ^operator <o>)
+	(<o> ^name river)
+}
+
+# --------------------------------------------------------------------
+# Preferences
+# --------------------------------------------------------------------
+
+# Prefer higher score.
+
+sp  {select*prefer*higher*score
+   	(state <s> ^operator <o1> +
+		       ^operator { <> <o1> <o2> } +)
+   	(<o1> ^score <s1>)
+	(<o2> ^score { > <s1>  <s2> })
+-->
+	(<s> ^operator <o2> > <o1>)
+}
+
+# If score is tied, operators are equal (indifferent) with respect to each other.
+
+sp  {select*indifferent*tied*score
+   	(state <s> ^operator <o1> +
+		       ^operator { <> <o1> <o2> } +)
+   	(<o1> ^score <s1>)
+	(<o2> ^score <s1>)
+-->
+	(<s> ^operator <o2> = <o1>)
+}
+
+# --------------------------------------------------------------------
+# Generic operator-handling productions
+# --------------------------------------------------------------------
+
+sp	{apply*bet*operator
+	(state <s> ^operator <o>
+			   ^io <io>)
+	(<io> ^output-link <ol>)
+	(<o> ^bet.action <a>)
+-->
+	(<ol> ^bet.action <a>)
+}
+
+sp {remove*bet
+	(state <s> ^operator <o>
+		  	   ^io.output-link <ol>)
+	(<ol> ^bet <b>)
+	(<b> ^status complete)
+-->
+	(<ol> ^bet <b> -)
+}
+

@@ -1,0 +1,391 @@
+
+# --------------------------------------------------------------------
+# flop - the first 3 board cards. Second stage in the game.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# Elaborate flop-strength based on analysis.
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*2-overcards
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^2-overcards yes)
+-->
+	(<g> ^flop-strength 6)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*pair
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^pair yes)
+-->
+	(<g> ^flop-strength 7)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*pair-in-hole
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^pair-in-hole yes)
+-->
+	(<g> ^flop-strength 6)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*pair-with-overcard
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^pair-with-overcard yes)
+-->
+	(<g> ^flop-strength 5)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*top-pair
+    (state <s> ^name flop
+		   	   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^top-pair yes)
+-->
+	(<g> ^flop-strength 3)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*2-pair
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^top-2-pair yes)
+-->
+	(<g> ^flop-strength 3)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*top-2-pair
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^top-2-pair yes)
+-->
+	(<g> ^flop-strength 2)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*trips-with-hole-card
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^trips-with-hole-card yes)
+-->
+	(<g> ^flop-strength 1)
+}   
+
+# --------------------------------------------------------------------
+# At this stage, straight and 4-straight must use hole cards.
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*straight
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^straight yes)
+-->
+	(<g> ^flop-strength 1)
+}   
+
+sp  {flop*elaborate*flop-strength*4-straight
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-straight yes)
+-->
+	(<g> ^flop-strength 4)
+}   
+
+# --------------------------------------------------------------------
+# At this stage, flush and 4-flush must use hole cards.
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*flush
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^flush yes)
+-->
+	(<g> ^flop-strength 1)
+}   
+
+sp  {flop*elaborate*flop-strength*4-flush
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-flush-with-hole-card yes)
+-->
+	(<g> ^flop-strength 4)
+}   
+
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*4-flush-and-4-straight
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-flush-with-hole-card yes
+		  ^4-straight yes)
+-->
+	(<g> ^flop-strength 1)
+}   
+
+# --------------------------------------------------------------------
+# Semibluff - as per Sklansky and Malmuth, p. 33. Hands where we may
+# drive everyone out, and, if we don't, we have a good chance to improve.
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*semibluff*inside-straight*pair-with-overcard
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^inside-straight yes
+		  ^pair-with-overcard yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*inside-straight*2-overcards
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^inside-straight yes
+		  ^2-overcards yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*4-straight*pair
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-straight yes
+		  ^pair yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*4-straight*2-overcards
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-straight yes
+		  ^2-overcards yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*4-flush*pair
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-flush yes
+		  ^pair yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*4-flush*2-overcards
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-flush yes
+		  ^2-overcards yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*3-flush*pair-with-overcard
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^3-flush yes
+		  ^pair-with-overcard yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+sp  {flop*elaborate*flop-strength*semibluff*3-flush*2-overcards
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^3-flush yes
+		  ^2-overcards yes)
+-->
+	(<g> ^flop-strength 3.5)
+}   
+
+# --------------------------------------------------------------------
+# At this stage, full house must use hole cards.
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*full-house
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^full-house-with-hole-card yes)
+-->
+	(<g> ^flop-strength 1)
+}   
+
+# --------------------------------------------------------------------
+# At this stage, 4 of a kind must use hole card.
+# --------------------------------------------------------------------
+
+sp  {flop*elaborate*flop-strength*4-of-a-kind
+    (state <s> ^name flop
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	(<an> ^4-of-a-kind-with-hole-card yes)
+-->
+	(<g> ^flop-strength 1)
+}   
+
+# --------------------------------------------------------------------
+# Propose operators based on flop-strength elaboration.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# bet-raise proposal - If there's a bet or raise available to make. 
+# Strongest hands, whenever possible.
+# --------------------------------------------------------------------
+
+sp  {flop*propose*bet-raise*always
+    (state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^max-bets <mb>
+		 ^num-bets < <mb> # bet or raise available
+		 ^flop-strength 1)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name flop*bet-raise*always
+         ^bet.action raise
+		 ^score 30)
+}   
+
+# --------------------------------------------------------------------
+# bet-raise proposal - If no one else has raised yet, bet or raise. 
+# We have a moderately strong hand, and we want to drive people out.
+# --------------------------------------------------------------------
+
+sp  {flop*propose*bet-raise*first
+    (state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets < 2 
+		 ^flop-strength <= 3)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name flop*bet-raise*first
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# bet proposal - If no one else has bet yet, bet. For hands that have
+# a chance to improve. Make sure there's money in the pot, and no
+# free rides.
+# --------------------------------------------------------------------
+
+sp  {flop*propose*bet*first
+    (state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets 0 
+		 ^flop-strength <= 4)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name flop*bet*first
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# call proposal - stay in with good cards.
+# --------------------------------------------------------------------
+ 
+sp  {flop*propose*call
+    (state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^flop-strength <= 5)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name flop*call
+         ^bet.action call
+		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# call proposal - stay in for 1 bet with cards that have some potential.
+# --------------------------------------------------------------------
+
+sp  {flop*propose*call*1-bet
+    (state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-bets <= 1
+		 ^flop-strength <= 6)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name flop*call*1-bet
+         ^bet.action call
+		 ^score 20)
+}   
+
+# --------------------------------------------------------------------
+# call proposal - Against just 1 player, stay in with almost anything.
+# This will help in cases where we're heads-up on the flop, and we're
+# getting driven out. This won't cost us more than 1 bet.
+# --------------------------------------------------------------------
+
+sp  {flop*propose*call*1-player
+    (state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^num-active-players 2
+		 ^flop-strength <= 7)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name flop*call*1-player
+         ^bet.action call
+		 ^score 20)
+}   

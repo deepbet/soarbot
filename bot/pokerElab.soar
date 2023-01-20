@@ -1,0 +1,76 @@
+# --------------------------------------------------------------------
+# Elaborations
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# amount-soarbot-has-bet*big-blind - amount-soarbot-has-in-pot 
+# adjusted for big blind ante.
+# --------------------------------------------------------------------
+
+sp  {elaborate*amount-soarbot-has-bet*big-blind
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^amount-soarbot-has-in-pot <aship>
+		 ^bet-size <bs>
+		 ^blind big)
+-->
+	(<g> ^amount-soarbot-has-bet (- <aship> <bs>))
+}   
+
+# --------------------------------------------------------------------
+# amount-soarbot-has-bet*small-blind - amount-soarbot-has-in-pot 
+# adjusted for small blind ante.
+# --------------------------------------------------------------------
+
+sp  {elaborate*amount-soarbot-has-bet*small-blind
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^amount-soarbot-has-in-pot <aship>
+		 ^bet-size <bs>
+		 ^blind small)
+-->
+	(<g> ^amount-soarbot-has-bet (- <aship> (int (/ <bs> 2))))
+}   
+
+# --------------------------------------------------------------------
+# amount-soarbot-has-bet*no-blind - amount-soarbot-has-in-pot. 
+# --------------------------------------------------------------------
+
+sp  {elaborate*amount-soarbot-has-bet*no-blind
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^amount-soarbot-has-in-pot <aship>
+		 ^blind no)
+-->
+	(<g> ^amount-soarbot-has-bet <aship>)
+}   
+
+# --------------------------------------------------------------------
+# adjusted-probability - best-hand-probability + potential 
+#	- negative-potential.
+# (How good the hand is now + its chances of getting better - its 
+# chances of getting worse.)
+# --------------------------------------------------------------------
+
+sp  {elaborate*adjusted-probability
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^best-hand-probability <bhp>
+		 ^potential <poten>
+	     ^negative-potential <npoten>)
+-->
+	(<g> ^adjusted-probability (- (+ <bhp> <poten>) <npoten>))
+}   
+
+
+# --------------------------------------------------------------------
+# adjusted-odds - adjusted-probability * pot-odds.
+#
+# Anything > 1 is a good bet. For example, if adjusted-probability 
+# is .33 and pot-odds are 4, we're getting good odds. If pot-odds 
+# are 2, we're getting poor odds.
+# --------------------------------------------------------------------
+
+sp  {elaborate*adjusted-odds
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^pot-odds <podds>
+		 ^adjusted-probability <ap>)
+-->
+	(<g> ^adjusted-odds (* <podds> <ap>))
+}   

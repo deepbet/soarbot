@@ -1,0 +1,66 @@
+
+# --------------------------------------------------------------------
+# river - fifth (last) board card. Last stage in the game.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# check-raise proposal - Strongest hands, no bets yet, 
+# enough players after us for someone to make the first bet.
+# --------------------------------------------------------------------
+
+sp  {river*propose*check-raise
+    (state <s> ^name river
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^check-raise-used no # Just once per game
+		 ^num-bets 0
+		 ^unacted >= 4
+		 ^best-hand-probability >= .90)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name river*check-raise
+         ^bet.action check-raise
+		 ^score 40)
+}   
+
+# --------------------------------------------------------------------
+# bet-raise proposal - If we have a strong hand, bet or raise.
+# --------------------------------------------------------------------
+
+sp  {river*propose*bet*raise*based-on-probability
+    (state <s> ^name river
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^best-hand-probability >= .90)
+-->
+	(<s> ^operator <o> +)
+	(<o> ^name river*bet*raise*based-on-probability
+         ^bet.action raise
+		 ^score 30)
+}  
+
+# --------------------------------------------------------------------
+# If we like the odds, call.
+# --------------------------------------------------------------------
+ 
+sp  {river*propose*call*based-on-adjusted-odds
+    (state <s> ^name river
+			   ^io <io>)
+	(<io> ^input-link <il>
+		  ^output-link <ol>)
+	(<il> ^clock <cl>
+		  ^game <g>)
+	(<g> ^adjusted-odds { <ao> > 1.00 })
+-->
+	(write (crlf) |adjusted-odds == | <ao>)
+	(<s> ^operator <o> +)
+	(<o> ^name river*call*based-on-adjusted-odds
+         ^bet.action call
+		 ^score 20)
+}   

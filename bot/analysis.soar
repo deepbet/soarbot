@@ -1,0 +1,714 @@
+
+# --------------------------------------------------------------------
+# analysis - Based on the 2 hole cards and the board, decide what the
+# situation is. Set the game ^analysis augmentation.
+#
+# We may end up with multiple analysis values, e.g. hole and board.
+# That's okay - when we propose operators, we sort this out.
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# 2-overcards - Both hole cards are higher than anything on board.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*2-overcards
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^top-board-rank-num <tbrn>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank-num { <rn1> > <tbrn> } ^type hole ^num <num1> )
+	(<c2> ^rank-num { <rn2> > <tbrn> } ^type hole ^num { <num2> > <num1> })
+	# But don't set this if we've also set...
+	(<an> -^pair yes
+		  -^top-2-pair yes
+ 		  -^trips-with-hole-card yes
+ 		  -^full-house-with-hole-card yes
+		  -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^2-overcards yes)
+}   
+
+# --------------------------------------------------------------------
+# pair - We have a pair using a hole card. Set this even when we set
+# other pair-related augmentations.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*pair
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+-->
+	(<an> ^pair yes)
+}   
+
+# --------------------------------------------------------------------
+# pair-in-hole - We have a pair using both hole cards. Set this even 
+# when we set other pair-related augmentations.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*pair-in-hole
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> } ^type hole)
+-->
+	(<an> ^pair-in-hole yes)
+}   
+
+# --------------------------------------------------------------------
+# pair-with-overcard - We have a pair using a hole card, and our other
+# hole card is as high as any board card. So if we pair up the 
+# overcard, we'll have a strong 2 pair. Example: we have a-4 in the
+# hole, and the board is 4-k-7.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*pair-with-overcard
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^top-board-rank-num <tbrn>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+	# Use rank-num instead of rank so that we can compare.
+	(<c3> ^rank-num { <rn3> >= <tbrn> } ^num { <num3> <> <num1> } ^type hole)
+	# But don't set this if we've also set...
+	(<an> -^top-pair yes
+		  -^top-2-pair yes
+ 		  -^trips-with-hole-card yes
+ 		  -^full-house-with-hole-card yes
+		  -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^pair-with-overcard yes)
+}   
+
+# --------------------------------------------------------------------
+# high-pair - We have a high pair using a hole card. Not necessarily 
+# top pair. Set this even when we set other pair-related augmentations.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*high-pair
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+		 ^card <c2>)
+	(<c1> ^rank { <r1> << a k q j t >> } ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+-->
+	(<an> ^high-pair yes)
+}
+
+# --------------------------------------------------------------------
+# top-pair - We have a pair using a hole card, and it's as high as any 
+# pair possible given what's on board. We have a strong pair.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*top-pair
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^top-board-rank-num <tbrn>)
+	# Use num to make sure we're looking at different cards.
+	# Use rank-num instead of rank so that we can compare.
+	(<c1> ^rank-num { <rn1> >= <tbrn> } ^num <num1> ^type hole)
+	(<c2> ^rank-num <rn1> ^num { <num2> > <num1> })
+	# But don't set this if we've also set...
+	(<an> -^top-2-pair yes
+ 		  -^trips-with-hole-card yes
+ 		  -^full-house-with-hole-card yes
+		  -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^top-pair yes)
+}   
+
+# --------------------------------------------------------------------
+# 2-pair - We have 2 pair, and at least 1 pair uses a hole card. 
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*2-pair
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+ 		 ^card <c3>
+	     ^card <c4>
+		 ^top-board-rank-num <tbrn>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank-num <rn1> ^num <num1> ^type hole)
+	(<c2> ^rank-num <rn1> ^num { <num2> > <num1> })
+	(<c3> ^rank-num { <rn3> <> <rn1> } ^num <num3> )
+	(<c4> ^rank-num <rn3> ^num { <num4> > <num3> })
+	# But don't set this if we've also set...
+	(<an> -^top-2-pair yes
+		  -^trips-with-hole-card yes
+		  -^full-house-with-hole-card yes
+		  -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^2-pair yes)
+}
+
+# --------------------------------------------------------------------
+# top-2-pair - We have 2 pair, and the higher pair uses a hole card. 
+# It's as high as any 2 pair possible given what's on board. 
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*top-2-pair
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+ 		 ^card <c3>
+	     ^card <c4>
+		 ^top-board-rank-num <tbrn>)
+	# Use num to make sure we're looking at different cards.
+	# Use rank-num instead of rank so that we can compare.
+	(<c1> ^rank-num { <rn1> >= <tbrn> } ^num <num1> ^type hole)
+	(<c2> ^rank-num <rn1> ^num { <num2> > <num1> })
+	(<c3> ^rank-num { <rn3> <> <rn1> } ^num <num3> )
+	(<c4> ^rank-num <rn3> ^num { <num4> > <num3> })
+	# But don't set this if we've also set...
+	(<an> -^trips-with-hole-card yes
+		  -^full-house-with-hole-card yes
+		  -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^top-2-pair yes)
+}   
+
+# --------------------------------------------------------------------
+# trips-with-hole-card - 3 of a kind with one of them in the hole.
+# Distinct from (much stronger than) 3 of a kind on board, which means
+# everybody has 3 of a kind.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*trips-with-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+	(<c3> ^rank <r1> ^num { <num3> > <num2> })
+	# But don't set this if we've also set...
+	(<an> -^full-house-with-hole-card yes
+	      -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^trips-with-hole-card yes)
+}   
+
+# TODO - straights are not tied to hole cards. They should be.
+
+# --------------------------------------------------------------------
+# inside-straight - 4 cards that are be part of a straight. Only one
+# way to make the straight, e.g. 7-8-9-jack v. 7-8-9-10.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*inside-straight
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	(<c1> ^rank-num <rn1> ^max-straight-rank-num <max>)
+	# Middle ranks can't be ace
+	(<c2> ^rank-num { <rn2> > <rn1> <= <max> } ^rank <> a)
+	(<c3> ^rank-num { <rn3> > <rn2> <= <max> } ^rank <> a)
+	(<c4> ^rank-num { <rn4> > <rn3> <= <max> })
+	# But don't set this if we've also set...
+	(<an> -^4-straight yes)
+-->
+	(<an> ^inside-straight yes)
+}   
+
+# --------------------------------------------------------------------
+# bobtail-straight - 4 cards in sequence that can improve at either
+# end, so no aces in the sequence For example, 2-3-4-5 is good because 
+# an ace or a 6 makes the straight, but not ace-2-3-4 because only a 5 
+# makes the straight, and not j-q-k-ace because only a 10 makes it.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*bobtail-straight
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	(<c1> ^rank <> a  ^next-rank <nr1>)
+	# Middle cards can't be ace
+	(<c2> ^rank { <nr1> <> a } ^next-rank <nr2>)
+	(<c3> ^rank { <nr2> <> a } ^next-rank <nr3>)
+	(<c4> ^rank { <nr3> <> a } )
+	# But don't set this if we've also set...
+	(<an> -^straight yes)
+-->
+	(<an> ^4-straight yes)
+}   
+
+# --------------------------------------------------------------------
+# double-inside-straight - 3 cards in sequence and a one-off at either 
+# end, e.g. 2-4-5-6-8, where a 3 or a 7 makes the straight. Should be 
+# close to a bobtail in value. Ace at either end is okay here.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*double-inside-straight
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	(<c1> ^next-next-rank <nnr1>)
+	# Middle cards can't be ace
+	(<c2> ^rank { <nnr1> <> a } ^next-rank <nr2>)
+	(<c3> ^rank { <nr2> <> a } ^next-rank <nr3>)
+	(<c4> ^rank { <nr3> <> a } ^next-next-rank <nnr4>)
+	(<c5> ^rank <nnr4>)
+	# But don't set this if we've also set...
+	(<an> -^straight yes)
+-->
+	(<an> ^4-straight yes)
+}   
+
+# --------------------------------------------------------------------
+# straight - 5 in a row.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*straight
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	(<c1> ^next-rank <nr1>)
+	# Middle ranks can't be ace
+	(<c2> ^rank { <nr1> <> a } ^next-rank <nr2>)
+	(<c3> ^rank { <nr2> <> a } ^next-rank <nr3>)
+	(<c4> ^rank { <nr3> <> a } ^next-rank <nr4>)
+	(<c5> ^rank <nr4>)
+-->
+	(<an> ^straight yes)
+}   
+
+# --------------------------------------------------------------------
+# 3-flush - 3 cards in the same suit.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*3-flush-with-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^num <num1> ^suit <s1> ^type hole)
+	(<c2> ^num { <num2> > <num1> }^suit <s1>)
+	(<c3> ^num { <num3> > <num2> }^suit <s1>)
+	# But don't set this if we've also set...
+	(<an> -^4-flush-with-hole-card yes
+		  -^flush-with-hole-card yes)
+-->
+	(<an> ^3-flush-with-hole-card yes)
+}   
+
+# --------------------------------------------------------------------
+# 4-flush - 4 cards in the same suit.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*4-flush-with-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^num <num1> ^suit <s1> ^type hole)
+	(<c2> ^num { <num2> > <num1> }^suit <s1>)
+	(<c3> ^num { <num3> > <num2> }^suit <s1>)
+ 	(<c4> ^num { <num4> > <num3> }^suit <s1>)
+	# But don't set this if we've also set...
+	(<an> -^flush-with-hole-card yes)
+-->
+	(<an> ^4-flush-with-hole-card yes)
+}   
+
+# --------------------------------------------------------------------
+# flush - 5 cards in the same suit.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*flush-with-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^num <num1> ^suit <s1> ^type hole)
+	(<c2> ^num { <num2> > <num1> }^suit <s1>)
+	(<c3> ^num { <num3> > <num2> }^suit <s1>)
+ 	(<c4> ^num { <num4> > <num3> }^suit <s1>)
+	(<c5> ^num { <num5> > <num4> }^suit <s1>)
+-->
+	(<an> ^flush-with-hole-card yes)
+}   
+
+# --------------------------------------------------------------------
+# full house - 3 of a kind and a pair.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*full-house-with-hole-card*pair-uses-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1>)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+	(<c3> ^rank <r1> ^num { <num3> > <num2> })
+	(<c4> ^rank { <r2> <> <r1> } ^num <num4> ^type hole)
+	(<c5> ^rank <r2> ^num { <num5> > <num4> })
+	# But don't set this if we've also set...
+	(<an> -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^full-house-with-hole-card yes)
+}   
+
+sp  {elaborate*analysis*full-house-with-hole-card*trips-use-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+	(<c3> ^rank <r1> ^num { <num3> > <num2> })
+	(<c4> ^rank { <r2> <> <r1> } ^num <num4>)
+	(<c5> ^rank <r2> ^num { <num5> > <num4> })
+	# But don't set this if we've also set...
+	(<an> -^4-of-a-kind-with-hole-card yes)
+-->
+	(<an> ^full-house-with-hole-card yes)
+}   
+
+# --------------------------------------------------------------------
+# four-of-a-kind-with-hole-card - 4 of a kind with one of them in the hole.
+# Distinct from (much stronger than) 4 of a kind on board, which means
+# everybody has 4 of a kind.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*4-of-a-kind-with-hole-card
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type hole)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> })
+	(<c3> ^rank <r1> ^num { <num3> > <num2> })
+	(<c4> ^rank <r1> ^num { <num4> > <num3> })
+-->
+	(<an> ^4-of-a-kind-with-hole-card yes)
+}   
+
+# --------------------------------------------------------------------
+# board elaborations
+# --------------------------------------------------------------------
+
+# --------------------------------------------------------------------
+# blank-on-board - A blank is a board card that doesn't seem to help anyone,
+# i.e. it doesn't make a pair or a piece of a straight or a flush.
+# Significant on the turn and the river, when the board cards show up
+# one at a time.
+#
+# Example: The flop is 3h 9d qs. The turn is 4h. The 4h is a blank.
+# It probably didn't improve anyone.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*blank-on-board
+    (state <s> ^name << turn river >>
+			   ^io.input-link.game <g>)
+	(<g> ^analysis <an>)
+	# Set this only if we haven't set anything else for the board.
+	(<an> -^pair-on-board yes
+		  -^2-pair-on-board yes
+		  -^trips-on-board yes
+		  -^3-straight-on-board yes
+ 		  -^4-straight-on-board yes
+		  -^straight-on-board yes
+		  -^3-flush-on-board yes
+ 		  -^4-flush-on-board yes
+		  -^flush-on-board yes
+		  -^full-house-on-board yes
+ 		  -^4-of-a-kind-on-board yes)
+-->
+	(<an> ^blank-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# pair-on-board - 2 of a kind on board.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*pair-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^type board ^num <num1>)
+	(<c2> ^rank <r1> ^type board ^num { <num2> > <num1> })
+	# But don't set this if we've also set...
+	(<an> -^2-pair-on-board yes
+		  -^trips-on-board yes
+		  -^full-house-on-board yes
+ 		  -^4-of-a-kind-on-board yes)
+-->
+	(<an> ^pair-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# 2-pair-on-board
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*2-pair-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+ 		 ^card <c3>
+	     ^card <c4>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank-num <rn1> ^num <num1> ^type board)
+	(<c2> ^rank-num <rn1> ^num { <num2> > <num1> } ^type board)
+	(<c3> ^rank-num { <rn3> <> <rn1> } ^num <num3> ^type board)
+	(<c4> ^rank-num <rn3> ^num { <num4> > <num3> } ^type board)
+	# But don't set this if we've also set...
+	(<an> -^trips-on-board yes
+		  -^full-house-on-board yes
+		  -^4-of-a-kind-on-board yes)
+-->
+	(<an> ^2-pair-on-board yes)
+} 
+
+# --------------------------------------------------------------------
+# trips-on-board - 3 of a kind on board.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*trips-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^type board ^num <num1>)
+	(<c2> ^rank <r1> ^type board ^num { <num2> > <num1> })
+	(<c3> ^rank <r1> ^type board ^num { <num3> > <num2> })
+	# But don't set this if we've also set...
+	(<an> -^full-house-on-board yes
+		  -^4-of-a-kind-on-board yes)
+-->
+	(<an> ^trips-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# 3-straight-on-board - 3 cards on board that could be part of a straight.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*3-straight-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>)
+	(<c1> ^rank-num <rn1> ^max-straight-rank-num <max> ^type board)
+	# Middle rank can't be ace
+	(<c2> ^rank-num { <rn2> > <rn1> <= <max> } ^type board ^rank <> a)
+	(<c3> ^rank-num { <rn3> > <rn2> <= <max> } ^type board)
+	# But don't set this if we've also set...
+	(<an> -^4-straight-on-board yes
+		  -^straight-on-board yes)
+-->
+	(<an> ^3-straight-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# 4-straight-on-board - 4 cards on board that could be part of a straight.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*4-straight-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	(<c1> ^rank-num <rn1> ^max-straight-rank-num <max> ^type board)
+	# Middle ranks can't be ace
+	(<c2> ^rank-num { <rn2> > <rn1> <= <max> } ^type board ^rank <> a)
+	(<c3> ^rank-num { <rn3> > <rn2> <= <max> } ^type board ^rank <> a)
+	(<c4> ^rank-num { <rn4> > <rn3> <= <max> } ^type board)
+	# But don't set this if we've also set...
+	(<an> -^straight-on-board yes)
+-->
+	(<an> ^4-straight-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# straight-on-board - 5 in a row on board.
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*straight-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	(<c1> ^next-rank <nr1> ^type board)
+	# Middle ranks can't be ace
+	(<c2> ^rank { <nr1> <> a } ^next-rank <nr2> ^type board)
+	(<c3> ^rank { <nr2> <> a } ^next-rank <nr3> ^type board)
+	(<c4> ^rank { <nr3> <> a } ^next-rank <nr4> ^type board)
+	(<c5> ^rank <nr4> ^type board)
+-->
+	(<an> ^straight-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# 3-flush on board
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*3-flush-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^num <num1> ^suit <s1> ^type board)
+	(<c2> ^num { <num2> > <num1> }^suit <s1> ^type board)
+	(<c3> ^num { <num3> > <num2> }^suit <s1> ^type board)
+	# But don't set this if we've also set...
+	(<an> -^4-flush-on-board yes
+		  -^flush-on-board yes)
+-->
+	(<an> ^3-flush-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# 4-flush on board
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*4-flush-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^num <num1> ^suit <s1> ^type board)
+	(<c2> ^num { <num2> > <num1> }^suit <s1> ^type board)
+	(<c3> ^num { <num3> > <num2> }^suit <s1> ^type board)
+ 	(<c4> ^num { <num4> > <num3> }^suit <s1> ^type board)
+	# But don't set this if we've also set...
+	(<an> -^flush-on-board yes)
+-->
+	(<an> ^4-flush-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# flush on board
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*flush-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^num <num1> ^suit <s1> ^type board)
+	(<c2> ^num { <num2> > <num1> }^suit <s1> ^type board)
+	(<c3> ^num { <num3> > <num2> }^suit <s1> ^type board)
+ 	(<c4> ^num { <num4> > <num3> }^suit <s1> ^type board)
+	(<c5> ^num { <num5> > <num4> }^suit <s1> ^type board)
+-->
+	(<an> ^flush-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# full-house-on-board
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*full-house-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>
+		 ^card <c5>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^num <num1> ^type board)
+	(<c2> ^rank <r1> ^num { <num2> > <num1> } ^type board)
+	(<c3> ^rank <r1> ^num { <num3> > <num2> } ^type board)
+	(<c4> ^rank { <r2> <> <r1> } ^num <num4> ^type board)
+	(<c5> ^rank <r2> ^num { <num5> > <num4> } ^type board)
+	# But don't set this if we've also set...
+	(<an> -^4-of-a-kind-on-board yes)
+-->
+	(<an> ^full-house-on-board yes)
+}   
+
+# --------------------------------------------------------------------
+# 4-of-a-kind-on-board
+# --------------------------------------------------------------------
+
+sp  {elaborate*analysis*4-of-a-kind-on-board
+    (state <s> ^io.input-link.game <g>)
+	(<g> ^analysis <an>
+		 ^card <c1>
+	     ^card <c2>
+		 ^card <c3>
+		 ^card <c4>)
+	# Use num to make sure we're looking at different cards.
+	(<c1> ^rank <r1> ^type board ^num <num1>)
+	(<c2> ^rank <r1> ^type board ^num { <num2> > <num1> })
+	(<c3> ^rank <r1> ^type board ^num { <num3> > <num2> })
+	(<c4> ^rank <r1> ^type board ^num { <num4> > <num3> })
+-->
+	(<an> ^4-of-a-kind-on-board yes)
+}   

@@ -1,0 +1,158 @@
+
+# N.B. Trailing zeros don't print, e.g. "1.0" prints as "1."
+
+# --------------------------------------------------------------------
+
+sp  {debug*game*always*available
+	(state <s> ^name poker
+			   ^io <io>)
+	(<io> ^input-link.game <g>
+		  ^output-link.bet <bet>)
+	# Print when we've set the bet, but it hasn't run yet.
+	(<bet> -^status complete)
+	(<g> 
+	 	^best-hand-probability 		<bhp>
+ 		^bet-size           		<bs>
+        ^bet-timing      	   		<bt>
+ 		^bets-to-call  	   			<btc>
+ 		^blind                		<bl>
+	   	^bluff						<bluff>
+		^button        	   			<bu>
+	    ^check-raise-used			<cru>
+		^distance-from-button 		<dfb>
+		^game-num             		<gn>
+	  	^max-bets		       		<mb>
+	 	^negative-potential   		<npoten>
+		^num-active-players   		<nap>
+ 		^num-bets   		   		<nb>
+		^num-players   	   			<np>
+	    ^position      	   			<po>
+        ^pot				   		<pot>
+	 	^pot-odds             		<podds>
+        ^potential			   		<poten>
+        ^stage         	   			<st>
+	    ^unacted                    <un>
+	)
+-->
+	(write (crlf) 	|best-hand-probability == | <bhp>)
+	(write (crlf) 	|bet-size == | <bs>)
+	(write (crlf) 	|bet-timing == | <bt>)
+   	(write (crlf) 	|bets-to-call == | <btc>)
+   	#(write (crlf) 	|blind == | <bl>)
+	(write (crlf) 	|bluff == | <bluff>)
+   	#(write (crlf) 	|button == | <bu>)
+	(write (crlf) 	|check-raise-used == | <cru>)
+   	#(write (crlf) 	|distance-from-button == | <dfb>)
+   	#(write (crlf) 	|game-num == | <gn>)
+   	#(write (crlf) 	|max-bets == | <mb>)
+	#(write (crlf) 	|negative-potential == | <npoten>)
+   	#(write (crlf) 	|num-active-players == | <nap>)
+   	(write (crlf) 	|num-bets == | <nb>)
+   	#(write (crlf) 	|num-players == | <np>)
+   	#(write (crlf) 	|position == | <po>)
+	#(write (crlf) 	|pot == | <pot>)
+	(write (crlf) 	|pot-odds == | <podds>)
+	#(write (crlf) 	|potential == | <poten>)
+   	(write (crlf) 	|stage == | <st>)
+	(write (crlf)   |unacted == | <un>)
+}
+
+# --------------------------------------------------------------------
+
+sp	{debug*odds
+	(state <s> ^io.input-link.game <g>)
+	(<g> 
+		^adjusted-odds		   		{ <aodds> > 0.0 }
+ 		^adjusted-probability 		<aprob>	
+		^amount-soarbot-has-bet 	<ashb>
+		^amount-soarbot-has-in-pot 	<aship>)
+-->
+	#(write (crlf) 	|adjusted-odds == | <aodds>)
+	#(write (crlf) 	|adjusted-probability == | <aprob>)
+	#(write (crlf) 	|amount-soarbot-has-bet == | <ashb>)
+	#(write (crlf) 	|amount-soarbot-has-in-pot == | <aship>)
+}
+
+# --------------------------------------------------------------------
+
+sp  {debug*preflop-strength
+	(state <s> ^name preflop
+			   ^io <io>)
+	(<io> ^input-link.game.preflop-strength <ps>
+		  # Print when we've set the bet action
+		  ^output-link.bet.action)
+-->
+	(write (crlf) |preflop-strength == | <ps>)
+}
+
+# --------------------------------------------------------------------
+
+sp  {debug*flop-strength
+	(state <s> ^name flop
+			   ^io <io>)
+	(<io> ^input-link.game.flop-strength <fs>
+		  # Print when we've set the bet action
+		  ^output-link.bet.action)
+-->
+	(write (crlf) |flop-strength == | <fs>)
+}
+
+# --------------------------------------------------------------------
+
+sp  {debug*turn-strength
+	(state <s> ^name turn
+			   ^io <io>)
+	(<io> ^input-link.game.turn-strength <ts>
+		  # Print when we've set the bet action
+		  ^output-link.bet.action)
+-->
+	(write (crlf) |turn-strength == | <ts>)
+}
+
+# --------------------------------------------------------------------
+
+sp 	{debug*analysis
+	(state <s> ^name poker
+			   ^io.input-link.game.analysis.<an>)
+-->
+	(write (crlf) |analysis == | <an>)
+}
+
+# --------------------------------------------------------------------
+
+sp  {debug*card
+	(state <s> ^name poker
+			   ^io.input-link.game.card <c>)
+	(<c> ^rank           <r>
+		 ^rank-num		 <rn>
+	  	 ^suit		     <su>
+		 ^type   	     <t>
+	     ^num        	 <n>
+         ^next-rank 	 <nr>
+         ^next-next-rank <nnr>
+	)
+-->
+	#(write (crlf) |Card data..........................|)
+	#(write (crlf) |type == | <t>)
+	#(write (crlf) |num == | <n>)
+	#(write (crlf) |rank == | <r>)
+	#(write (crlf) |rank-num == | <rn>)
+	#(write (crlf) |suit == | <su>)
+	#(write (crlf) |next-rank == | <nr>)
+	#(write (crlf) |next-next-rank == | <nnr>)
+}
+
+# --------------------------------------------------------------------
+
+sp 	{debug*bet*action
+	(state <s> ^name poker
+			   ^io.output-link.bet.action <ac>)
+-->
+	(write (crlf) |bet.action == | <ac>)
+}
+
+# --------------------------------------------------------------------
+
+
+
+
