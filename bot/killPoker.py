@@ -10,10 +10,10 @@ l = f.readline() # first data line
 if l:
 	pid, tty, time, cmd = string.split(l)
 	killPid = "kill " + pid
-	print "found poker @", pid, "- killing it"
+	print("found poker @", pid, "- killing it")
 	os.system(killPid)
 else:
-	print "poker not found"
+	print("poker not found")
 f.close()
 os.remove(FILE_NAME)
 

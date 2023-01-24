@@ -1,0 +1,6 @@
+# IntelliJ IDEA
+.idea/
+
+# python files
+*.pyc
+.python-version

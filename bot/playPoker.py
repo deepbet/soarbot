@@ -8,7 +8,7 @@ FALSE = 0
 # --------------------------------------------------------------------
 
 def usage():
-	print r"""
+	print(r"""
 Usage error!
 
 Usage: playPoker [-b|f] [-pNNNNN] userName
@@ -25,7 +25,7 @@ pNNNNN - Port. Optional; default is 55000. Values as of 10/2002:
          55002 - Humans Heads-Up
          55003 - Pokibrat Heads-Up
 		 
-"""
+""")
 	sys.exit(1)
 
 # --------------------------------------------------------------------
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 		log = ''
 	cmd = "java poker.online.BotPlayer SoarBot.pd games.cs.ualberta.ca"
 	cmd = cmd + (" %s %s %s %s %s" % (port, userName, userName, log, mode))
-	#print cmd
+	#print(cmd)
 	os.system(cmd)
 
 
