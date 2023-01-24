@@ -1,7 +1,9 @@
 from random import random
 from enum import Enum
 
+from .pos import BetTiming
 from .cards import Card
+from .analyze import PocketAnalyzer
 
 
 class Round(Enum):
@@ -9,6 +11,22 @@ class Round(Enum):
     Flop = 2
     Turn = 3
     River = 4
+
+
+class ActionType(Enum):
+    Fold = 0
+    Check = 1
+    Call = 2
+    Raise = 3
+
+
+class Action:
+    def __init__(self, type_, bet=None):
+        self.type_ = type_
+        if self.type_ != ActionType.Raise and bet is not None:
+            raise f"Invalid action {ActionType.name} with bet = {bet}"
+
+        self.bet = bet
 
 
 # TODO: more info could be acquired from the Java API
@@ -40,19 +58,19 @@ class Game:
         self.hole_cards = hole_cards
 
         self.our_chips_in_pot = 0
+        self.check_raise_in_progress = False
         self.check_raise_used = False
 
         # The number of chips the player has to call to stay in.
         # The type is float, not integer, because the small blind often has
         # 0.5 BB to call in the preflop betting.
-        self.amount_to_call_in_bb = 0.0
+        # self.amount_to_call_in_bb = 0.0
 
+        self.total_players_num = num_players
         self.num_active_players = num_players
         self.number_of_unacted_players = 0
 
         self.max_bets = self.MAX_RAISES
-        # number of bets so far in round
-        self.num_bets = 0
 
         self.pot = 0
         self.pot_odds = 0
@@ -67,6 +85,43 @@ class Game:
 
     BLUFF_PROBABILITY = 0.2
     MAX_RAISES = 4  # Holdem.MAX_RAISES
+
+    def set_blinds(self, action, total_bet, paid_now):
+        if self.round == Round.PreFlop and not self.actions:
+            if action != "BIGBLIND":
+                raise ValueError(f"Invalid blind type {action}")
+            self.actions.append(Action(type_=ActionType.Raise, bet=total_bet))
+        else:
+            raise ValueError("Cannot set blinds in the middle of the game")
+
+    def register_action(self, action, total_bet, paid_now):
+        if action == "fold":
+            action = Action(type_=ActionType.Fold)
+            self.num_active_players -= 1
+        elif action == "call":
+            if paid_now:
+                action = Action(type_=ActionType.Call)
+            else:
+                action = Action(type_=ActionType.Check)
+        elif action == "raise":
+            action = Action(type_=ActionType.Raise, bet=total_bet)
+        else:
+            raise ValueError(f"Invalid action {action}")
+        self.actions.append(action)
+
+    def num_bets(self):
+        """number of bets so far in round"""
+        return sum(1 for action in self.actions if action.type_ == ActionType.Raise)
+
+    def set_pot(self, amount):
+        self.pot = amount
+
+    def get_bet_timing(self):
+        return BetTiming.get_list(self.total_players_num)[self.position]
+
+    def get_pocket_strength(self):
+        pa = PocketAnalyzer(*self.hole_cards)
+        return pa.preflop_strength()
 
     def _switch_round(self):
         # noinspection PyTypeChecker
@@ -90,21 +145,16 @@ class Game:
         assert len(self.board) == 5
         self._switch_round()
 
-    # private int finishCheckRaise() {
-    #
-    # 		// Clear flag
-    # 		m_pendingCheckRaise = false;
-    # 		// If there's a raise left, make it, else call.
-    # 		if (m_gameInfo.getNumRaises() < Holdem.MAX_RAISES) {
-    # 			// Set game flag
-    # 			setGameInfo(KEY_CHECK_RAISE_USED, "yes");
-    # 			return PokerConsts.RAISE;
-    # 		}
-    # 		else {
-    # 			return PokerConsts.CALL;
-    # 		}
-    # 	}
-    #
+    def finish_check_raise(self):
+        assert self.check_raise_in_progress, "Not a check-raise mode"
+        # Clear flag
+        self.check_raise_in_progress = False
+        self.check_raise_used = True
+        # If there's a raise left, make it, else call.
+        if self.num_bets() < self.MAX_RAISES:
+            return 'raise'
+        else:
+            return 'call'
 
     def get_best_hand_probability(self):
         """
