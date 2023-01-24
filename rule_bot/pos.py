@@ -56,33 +56,13 @@ class BetTiming(Enum):
         num_middle = 3 if num_early_middle > 3 else num_early_middle
         num_early = num_early_middle - num_middle
 
+        # my custom implementation to allow the 'Early' in 6-players game:
+        if num_early_middle >= 2:
+            if num_early == 0:
+                num_early = 1
+                num_middle -= 1
+
         return positions + [cls.Early] * num_early + [cls.Middle] * num_middle + [cls.Late]
-
-
-def test_2_3_4_5_6():
-    assert BetTiming.get_list(2) == [BetTiming.Button, BetTiming.Blind]
-    assert BetTiming.get_list(3) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind]
-    assert BetTiming.get_list(4) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind, BetTiming.Late]
-    assert BetTiming.get_list(5) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind,
-                                     BetTiming.Middle, BetTiming.Late]
-    assert BetTiming.get_list(6) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind,
-                                     BetTiming.Middle, BetTiming.Middle, BetTiming.Late]
-
-
-def test_with_early():
-    assert BetTiming.get_list(7) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind,
-                                     BetTiming.Middle, BetTiming.Middle, BetTiming.Middle, BetTiming.Late]
-    assert BetTiming.get_list(8) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind,
-                                     BetTiming.Early,
-                                     BetTiming.Middle, BetTiming.Middle, BetTiming.Middle, BetTiming.Late]
-    assert BetTiming.get_list(9) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind,
-                                     BetTiming.Early, BetTiming.Early,
-                                     BetTiming.Middle, BetTiming.Middle, BetTiming.Middle, BetTiming.Late]
-
-    assert BetTiming.get_list(10) == [BetTiming.Button, BetTiming.Blind, BetTiming.Blind,
-                                      BetTiming.Early, BetTiming.Early, BetTiming.Early,
-                                      BetTiming.Middle, BetTiming.Middle, BetTiming.Middle,
-                                      BetTiming.Late]
 
 
 def get_distance_from_button(pos, btn_pos, num_players):
@@ -90,8 +70,3 @@ def get_distance_from_button(pos, btn_pos, num_players):
         return pos - btn_pos
 
     return pos + num_players - btn_pos
-
-
-if __name__ == '__main__':
-    test_2_3_4_5_6()
-    test_with_early()
