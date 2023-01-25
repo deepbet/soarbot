@@ -252,8 +252,118 @@ class RuleHolder:
 
     def determine_turn(self):
         actions = self.default_actions()
-        # TODO (turn.soar)
+        for action in [
+                self.turn_check_raise(),
+                self.turn_raise(),
+                self.turn_call()]:
+            if action:
+                actions.append(action)
+
         return actions
+
+    def get_turn_strength(self):
+        call_action = self.valid_call_action()
+        return self.game_state.get_turn_strength(call_action['amount'])
+
+    def turn_check_raise(self):
+        """
+        If we've got the best cards, early position,
+        and no bets yet, check-raise.
+        """
+        cont = self.continue_check_raise()
+        if cont:
+            return cont
+
+        call_action = self.valid_call_action()
+        strength = self.get_turn_strength()
+
+        if not self.game_state.check_raise_used:  # Just once per game
+            # Strongest hands, no bets yet,
+            # enough players after us for someone to make the first bet.
+
+            if self.game_state.num_bets() == 0 \
+                    and self.game_state.unacted_in_this_round >= 4 \
+                    and strength == 1:
+                self.game_state.check_raise_in_progress = True
+                return call_action, 40
+
+    def turn_raise(self):
+        raise_action = self.raise_amount()
+        if raise_action[0] == 'call':
+            return raise_action, 100
+
+        assert raise_action[0] == 'raise'
+
+        strength = self.get_turn_strength()
+
+        # If there's a bet or raise available to make.
+        # Strongest hands, whenever possible.
+        if self.game_state.num_bets() < self.game_state.max_bets \
+                and strength == 1:
+            # bet-raise*always
+            return raise_action, 30
+
+        # If there's just 1 bet, and we have a very good hand, raise.
+        if self.game_state.num_bets() == 1 \
+                and strength <= 2:
+            # bet-raise*1-bet
+            return raise_action, 30
+
+        # Bet-first (semibluff included).
+        if self.game_state.num_bets() == 0 \
+                and strength <= 2.5:
+            # bet-first*semibluff
+            return raise_action, 30
+
+        # If no one else has bet yet, and we're in good
+        # position, and the game is short-handed, bet. We have a hand
+        # we would normally call with, and we may be able to drive people out.
+        if self.game_state.num_bets() == 0 \
+                and strength <= 4 \
+                and self.game_state.num_active_players <= 3 \
+                and self.game_state.unacted_in_this_round <= 2:  # No more than 1 player behind us
+
+            # bet-first*late*short-handed
+            return raise_action, 30
+
+        ca = self.game_state.get_cards_analyzer()
+        has_blank_card = ca.is_blank_on_board()
+        # If no one else has bet yet, and we're in last position,
+        # and the turn was a blank (no-help card), bet with mediocre cards.
+        # We may be able to drive people out, and the blank reduces the
+        # chance of a check-raise.
+        if self.game_state.num_bets() == 0 \
+                and has_blank_card \
+                and strength <= 7 \
+                and self.game_state.unacted_in_this_round == 1:  # We're last
+
+            # bet-first*blank-on-board
+            return raise_action, 30
+
+    def turn_call(self):
+        call_action = self.valid_call_action()
+
+        strength = self.get_turn_strength()
+
+        if strength <= 4:
+            # stay in with good cards.
+            return call_action, 20
+
+        ca = self.game_state.get_cards_analyzer()
+        has_blank_card = ca.is_blank_on_board()
+        # Mediocre cards, but turn card was a blank (no help).
+        # Defend against attempts to steal the pot.
+        if has_blank_card and strength <= 7:
+            # call*blank-on-board
+            return call_action, 20
+
+        # Mediocre cards, but just 1 player. Defend against
+        # attempts to steal the pot.
+        if self.game_state.num_active_players == 2 \
+                and strength <= 7:
+
+            # call*just-1-player
+            return call_action, 20
 
     def determine_river(self):
         actions = self.default_actions()

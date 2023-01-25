@@ -819,3 +819,182 @@ class CardsAnalyzer(PocketAnalyzer):
 
         # nothing special
         return 100
+
+    def is_board_very_danger(self):
+        # Any obvious dangers?
+        return any([
+            self.is_4_flush_on_board(),
+            self.is_flush_on_board(),
+            self.is_full_house_on_board(),
+            self.is_4_of_a_kind_on_board()
+        ])
+
+    def turn_strength(self, pot_odds):
+        """
+        Elaborate turn-strength based on analysis.
+        """
+        assert len(self.all_cards()) == 6
+
+        if self.is_trips_with_hole_card():
+            # Any obvious dangers?
+            if not any([
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 1
+
+        if self.is_straight():
+            # Any obvious dangers?
+            if not any([
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 1
+
+        if self.is_flush_with_hole_card():
+            # Any obvious dangers?
+            if not any([
+                self.is_2_pair_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 1
+
+        # 4-flush-and-4-straight
+        if self.is_4_straight() \
+                and self.is_4_flush_with_hole_card() \
+                and pot_odds >= 3:
+            # Any obvious dangers?
+            if not any([
+                self.is_2_pair_on_board(),
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 1
+
+        if self.is_full_house_with_hole_card():
+            # Any obvious dangers?
+            if not any([
+                self.is_full_house_on_board(),
+                self.is_4_of_a_kind_on_board()
+            ]):
+                return 1
+
+        if self.is_4_of_a_kind_with_hole_card():
+            return 1
+
+        if self.is_top_2_pair():
+            # Any obvious dangers?
+            if not any([
+                self.is_trips_on_board(),
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 2
+
+        if self.is_trips_with_hole_card():
+            return 2
+
+        # --------------------------------------------------------------------
+        # Semibluff - as per Sklansky and Malmuth, p. 35. Hands where we may
+        # drive everyone out, and, if we don't, we have a good chance to improve.
+        # --------------------------------------------------------------------
+        if self.is_pair():
+            if self.is_4_straight():
+                # semibluff*straight
+                return 2.5
+            if self.is_4_flush_with_hole_card():
+                # semibluff*flush
+                return 2.5
+
+        if self.is_top_pair():
+            # Any obvious dangers?
+            if not any([
+                self.is_pair_on_board(),
+                self.is_2_pair_on_board(),
+                self.is_trips_on_board(),
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 3
+
+        if self.is_2_pair():
+            # Any obvious dangers?
+            if not any([
+                self.is_trips_on_board(),
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 3
+
+        if self.is_4_straight() and pot_odds >= 5:
+            # Any obvious dangers?
+            if not any([
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 3
+
+        if self.is_flush_with_hole_card():
+            return 3
+
+        if self.is_4_flush_with_hole_card() and pot_odds >= 4:
+            # Any obvious dangers?
+            if not any([
+                self.is_2_pair_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 3
+
+        if self.is_4_flush_with_hole_card() \
+                and self.is_4_straight() \
+                and pot_odds >= 3:
+            return 3
+
+        if self.is_full_house_with_hole_card():
+            return 3
+
+        if self.is_pair_with_overcard() \
+                and pot_odds >= 5:
+            # Any obvious dangers?
+            if not any([
+                self.is_pair_on_board(),
+                self.is_2_pair_on_board(),
+                self.is_trips_on_board(),
+                self.is_4_straight_on_board(),
+                self.is_straight_on_board(),
+                self.is_board_very_danger(),
+            ]):
+                return 4
+
+        if self.is_straight():
+            return 4
+
+        if self.is_top_2_pair() and pot_odds >= 3:
+            return 5
+
+        if self.is_top_pair() and pot_odds >= 5:
+            return 6
+
+        if self.is_2_pair() and pot_odds >= 3:
+            return 6
+
+        if self.is_4_straight() and pot_odds >= 5:
+            return 6
+
+        if self.is_4_flush_with_hole_card() and pot_odds >= 4:
+            return 6
+
+        if self.is_pair_with_overcard() and pot_odds >= 5:
+            return 7
+
+        if self.is_high_pair() and pot_odds >= 5:
+            return 7
+
+        # nothing special
+        return 100

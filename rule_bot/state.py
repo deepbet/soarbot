@@ -73,7 +73,6 @@ class Game:
         self.max_bets = self.MAX_RAISES
 
         self.pot = 0
-        self.pot_odds = 0
         self.bluff = random() < self.BLUFF_PROBABILITY
 
         # sets on every round
@@ -123,9 +122,17 @@ class Game:
         pa = PocketAnalyzer(*self.hole_cards)
         return pa.preflop_strength()
 
+    def get_cards_analyzer(self):
+        return CardsAnalyzer(*self.hole_cards, *self.board)
+
     def get_flop_strength(self):
-        ca = CardsAnalyzer(*self.hole_cards, *self.board)
+        ca = self.get_cards_analyzer()
         return ca.flop_strength()
+
+    def get_turn_strength(self, call_amount):
+        ca = self.get_cards_analyzer()
+        pot_odds = self.get_pot_odds(call_amount)
+        return ca.turn_strength(pot_odds)
 
     def _switch_round(self):
         # noinspection PyTypeChecker
@@ -209,14 +216,17 @@ class Game:
         # river - no more potential
         return 0.0
 
-    def get_pot_odds(self):
+    def get_pot_odds(self, call_amount):
         """
         Ratio between what it costs to call and size of pot,
 
         E.g. $10 to call, $50 in pot, potOdds = 5.
         """
 
-        return self.get_amount_to_call() / self.get_pot()
+        if call_amount <= 0:
+            return 10000  #
+        else:
+            return self.pot / call_amount
 
     def adjusted_probability(self):
         """
