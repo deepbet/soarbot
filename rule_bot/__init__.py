@@ -15,20 +15,23 @@ import pypokerengine.utils.visualize_utils as U  # noqa: E402
 
 
 class RuleBasedPlayer(BasePokerPlayer):
-    def __init__(self):
+    def __init__(self, verbose=False):
         super().__init__()
         self.small_blind = None
         self.game_state = None
+        self.verbose = verbose
 
     def declare_action(self, valid_actions, hole_card, round_state):
-        # print("*******************", valid_actions, hole_card, round_state)
-        print(U.visualize_declare_action(valid_actions, hole_card, round_state, self.uuid, show_round_state=False))
+        if self.verbose:
+            # print("*******************", valid_actions, hole_card, round_state)
+            print(U.visualize_declare_action(valid_actions, hole_card, round_state, self.uuid, show_round_state=False))
         action, amount = RuleHolder(self.game_state, valid_actions).determine_action()
         return action, amount
 
     def receive_game_start_message(self, game_info):
         self.small_blind = game_info['rule']['small_blind_amount']
-        print(U.visualize_game_start(game_info, self.uuid))
+        if self.verbose:
+            print(U.visualize_game_start(game_info, self.uuid))
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         # print("++++++++++++++++++", round_count, hole_card, seats)
@@ -38,8 +41,9 @@ class RuleBasedPlayer(BasePokerPlayer):
 
         hole_cards = [Card.parse(c[1] + c[0]) for c in hole_card]
         self.game_state = Game(self.small_blind, len(seats), player_pos, hole_cards)
-        # for c in hole_cards: print(c)
-        print(U.visualize_round_start(round_count, hole_card, seats, self.uuid))
+        if self.verbose:
+            # for c in hole_cards: print(c)
+            print(U.visualize_round_start(round_count, hole_card, seats, self.uuid))
 
     def receive_street_start_message(self, street, round_state):
         # print("%%%%%%%%%%%%%%%%%%%%%%%", street, round_state)
@@ -68,7 +72,8 @@ class RuleBasedPlayer(BasePokerPlayer):
             cards = [Card.parse(c[1] + c[0]) for c in cards]
             self.game_state.deal_river(*cards)
 
-        print(U.visualize_street_start(street, round_state, self.uuid))
+        if self.verbose:
+            print(U.visualize_street_start(street, round_state, self.uuid))
 
     def receive_game_update_message(self, new_action, round_state):
         # print("=========================", new_action, round_state)
@@ -79,8 +84,10 @@ class RuleBasedPlayer(BasePokerPlayer):
         self.game_state.register_action(new_action['action'], new_action['amount'], paid)
         self.game_state.set_pot(round_state['pot']['main']['amount'])
 
-        # do not print the round state
-        print(U.visualize_game_update(new_action, round_state, self.uuid, show_round_state=False))
+        if self.verbose:
+            # do not print the round state
+            print(U.visualize_game_update(new_action, round_state, self.uuid, show_round_state=False))
 
     def receive_round_result_message(self, winners, hand_info, round_state):
-        print(U.visualize_round_result(winners, hand_info, round_state, self.uuid))
+        if self.verbose:
+            print(U.visualize_round_result(winners, hand_info, round_state, self.uuid))
