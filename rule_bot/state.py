@@ -3,7 +3,7 @@ from enum import Enum
 
 from .pos import BetTiming
 from .cards import Card
-from .analyze import PocketAnalyzer
+from .analyze import PocketAnalyzer, CardsAnalyzer
 
 
 class Round(Enum):
@@ -122,6 +122,10 @@ class Game:
     def get_pocket_strength(self):
         pa = PocketAnalyzer(*self.hole_cards)
         return pa.preflop_strength()
+
+    def get_flop_strength(self):
+        ca = CardsAnalyzer(*self.hole_cards, *self.board)
+        return ca.flop_strength()
 
     def _switch_round(self):
         # noinspection PyTypeChecker

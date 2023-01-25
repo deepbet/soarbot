@@ -317,7 +317,7 @@ class CardsAnalyzer(PocketAnalyzer):
             # print(first_in_straight, max_straight_rank)
 
             covered_with_c1_as_lowest_in_straight = [first_in_straight]
-            for r2 in sorted_all_cards[i+1:]:
+            for r2 in sorted_all_cards[i + 1:]:
                 base = covered_with_c1_as_lowest_in_straight[-1]
                 if base == Rank.Ace:
                     # special case for the starting Ace
@@ -346,7 +346,7 @@ class CardsAnalyzer(PocketAnalyzer):
         for i, first_in_straight in enumerate(sorted_all_cards):
             seq = [first_in_straight]
 
-            for r2 in sorted_all_cards[i+1:]:
+            for r2 in sorted_all_cards[i + 1:]:
                 if r2 == seq[-1]:
                     # skip the pairs
                     continue
@@ -372,7 +372,7 @@ class CardsAnalyzer(PocketAnalyzer):
         for i, first_in_straight in enumerate(sorted_all_cards):
             seq = [first_in_straight]
 
-            for r2 in sorted_all_cards[i+1:]:
+            for r2 in sorted_all_cards[i + 1:]:
                 if r2 == seq[-1]:
                     # skip the pairs
                     continue
@@ -406,7 +406,7 @@ class CardsAnalyzer(PocketAnalyzer):
         for i, first_in_straight in enumerate(sorted_all_cards):
             seq = [first_in_straight]
 
-            for r2 in sorted_all_cards[i+1:]:
+            for r2 in sorted_all_cards[i + 1:]:
                 if r2 == seq[-1]:
                     # skip the pairs
                     continue
@@ -502,7 +502,7 @@ class CardsAnalyzer(PocketAnalyzer):
     def is_full_house_with_hole_card(self):
         """3 of a kind and a pair."""
         return self.is_full_house_with_pair_hole_cards() or \
-            self.is_full_house_with_triple_hole_cards()
+               self.is_full_house_with_triple_hole_cards()
 
     def is_4_of_a_kind_with_hole_card(self):
         """
@@ -612,7 +612,7 @@ class CardsAnalyzer(PocketAnalyzer):
             max_straight_rank = first_in_straight.covered_straight_max_rank()
 
             seq = [first_in_straight]
-            for r2 in sorted_board_cards[i+1:]:
+            for r2 in sorted_board_cards[i + 1:]:
                 base = seq[-1]
                 if base == Rank.Ace:
                     # special case for the starting Ace
@@ -643,7 +643,7 @@ class CardsAnalyzer(PocketAnalyzer):
             max_straight_rank = first_in_straight.covered_straight_max_rank()
 
             seq = [first_in_straight]
-            for r2 in sorted_board_cards[i+1:]:
+            for r2 in sorted_board_cards[i + 1:]:
                 base = seq[-1]
                 if base == Rank.Ace:
                     # special case for the starting Ace
@@ -736,3 +736,86 @@ class CardsAnalyzer(PocketAnalyzer):
             if same_rank == 4:
                 return True
         return False
+
+    def flop_strength(self):
+        """
+        Elaborate flop-strength based on analysis.
+        """
+        assert len(self.all_cards()) == 5
+        if self.is_trips_with_hole_card():
+            return 1
+
+        # At this stage, 4 of a kind must use hole card.
+        if self.is_4_of_a_kind_with_hole_card():
+            return 1
+
+        # At this stage straight must use hole cards.
+        if self.is_straight():
+            return 1
+
+        # At this stage flush must use hole cards.
+        if self.is_flush_with_hole_card():
+            return 1
+
+        # At this stage 4-flush must use hole cards.
+        if self.is_4_straight() and self.is_4_flush_with_hole_card():
+            # 4-flush-and-4-straight
+            return 1
+
+        # At this stage, full house must use hole cards.
+        if self.is_full_house_with_hole_card():
+            return 1
+
+        if self.is_top_2_pair():
+            return 2
+
+        if self.is_top_pair():
+            return 3
+
+        # TODO: fix the rule in the flop.soar
+        if self.is_2_pair():
+            return 3
+
+        # --------------------------------------------------------------------
+        # Semibluff - as per Sklansky and Malmuth, p. 33. Hands where we may
+        # drive everyone out, and, if we don't, we have a good chance to improve.
+        # --------------------------------------------------------------------
+
+        if self.is_inside_straight():
+            if self.is_pair_with_overcard() or self.is_2_overcards():
+                return 3.5
+
+        if self.is_4_straight():
+            if self.is_pair() or self.is_2_overcards():
+                return 3.5
+
+        if self.is_4_flush_with_hole_card():
+            if self.is_pair() or self.is_2_overcards():
+                return 3.5
+
+        if self.is_3_flush_with_hole_card():
+            if self.is_pair_with_overcard() or self.is_2_overcards():
+                return 3.5
+
+        # At this stage, 4-straight must use hole cards.
+        if self.is_4_straight():
+            return 4
+
+        # At this stage 4-flush must use hole cards.
+        if self.is_4_flush_with_hole_card():
+            return 4
+
+        if self.is_pair_with_overcard():
+            return 5
+
+        if self.is_2_overcards():
+            return 6
+
+        if self.find_pair_only_in_hole():
+            return 6
+
+        if self.is_pair():
+            return 7
+
+        # nothing special
+        return 100

@@ -143,6 +143,10 @@ class TestWithHoleCombinations:
         ca = analyzer_from_strs('As', '4d', '4h', 'Kc', '4c')
         assert ca.is_trips_with_hole_card()
 
+    def test_trips_with_both_holes(self):
+        ca = analyzer_from_strs('4s', '4d', '4h', 'Kc', 'Ac')
+        assert ca.is_trips_with_hole_card()
+
     def test_4_cards_forming_straight(self):
         ca = analyzer_from_strs('7s', '8d', '9h', 'Kc', 'Jc')
         assert ca.is_inside_straight()
