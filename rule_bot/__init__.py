@@ -25,7 +25,7 @@ class RuleBasedPlayer(BasePokerPlayer):
         if self.verbose:
             # print("*******************", valid_actions, hole_card, round_state)
             print(U.visualize_declare_action(valid_actions, hole_card, round_state, self.uuid, show_round_state=False))
-        action, amount = RuleHolder(self.game_state, valid_actions).determine_action()
+        action, amount = RuleHolder(self.game_state, valid_actions).determine_action(self.uuid)
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -40,7 +40,7 @@ class RuleBasedPlayer(BasePokerPlayer):
         player_pos = ids.index(self.uuid)
 
         hole_cards = [Card.parse(c[1] + c[0]) for c in hole_card]
-        self.game_state = Game(self.small_blind, len(seats), player_pos, hole_cards)
+        self.game_state = Game(self.small_blind, ids, player_pos, hole_cards)
         if self.verbose:
             # for c in hole_cards: print(c)
             print(U.visualize_round_start(round_count, hole_card, seats, self.uuid))
@@ -81,7 +81,8 @@ class RuleBasedPlayer(BasePokerPlayer):
         logging.debug(round_state['action_histories'][round_state['street']])
         logging.debug(last_action)
         paid = last_action.get('paid', last_action.get('add_amount'))
-        self.game_state.register_action(new_action['action'], new_action['amount'], paid)
+        player = new_action['player_uuid']
+        self.game_state.register_action(player, new_action['action'], new_action['amount'], paid)
         self.game_state.set_pot(round_state['pot']['main']['amount'])
 
         if self.verbose:

@@ -52,7 +52,9 @@ class RuleHolder:
         else:
             return call_action['action'], call_action['amount']
 
-    def determine_action(self):
+    def determine_action(self, our_id):
+        # print(our_id, file=sys.stderr)
+        # print(self.game_state.players_history[our_id], file=sys.stderr)
         current_round = self.game_state.round
         if current_round == Round.PreFlop:
             actions = self.determine_preflop()
@@ -66,7 +68,8 @@ class RuleHolder:
             raise NotImplementedError(f"Bad round {current_round}")
 
         # choose the action with the maximum priority
-        the_action, _ = max(actions, key=lambda x: x[1])
+        the_action, _priority = max(actions, key=lambda x: x[1])
+        # print(the_action, _priority, our_id, file=sys.stderr)
         if type(the_action) is dict:
             return the_action['action'], the_action['amount']
         else:
@@ -246,7 +249,7 @@ class RuleHolder:
         # Against just 1 player, stay in with almost anything.
         # This will help in cases where we're heads-up on the flop, and we're
         # getting driven out. This won't cost us more than 1 bet.
-        if self.game_state.num_active_players == 2 \
+        if self.game_state.num_active_players() == 2 \
                 and strength <= 7:
             return call_action, 20
 
@@ -282,7 +285,7 @@ class RuleHolder:
             # enough players after us for someone to make the first bet.
 
             if self.game_state.num_bets() == 0 \
-                    and self.game_state.unacted_in_this_round >= 4 \
+                    and self.game_state.num_unacted_players() >= 4 \
                     and strength == 1:
                 self.game_state.set_check_raise_in_progress()
                 return call_action, 40
@@ -320,8 +323,8 @@ class RuleHolder:
         # we would normally call with, and we may be able to drive people out.
         if self.game_state.num_bets() == 0 \
                 and strength <= 4 \
-                and self.game_state.num_active_players <= 3 \
-                and self.game_state.unacted_in_this_round <= 2:  # No more than 1 player behind us
+                and self.game_state.num_active_players() <= 3 \
+                and self.game_state.num_unacted_players() <= 2:  # No more than 1 player behind us
 
             # bet-first*late*short-handed
             return raise_action, 30
@@ -335,7 +338,7 @@ class RuleHolder:
         if self.game_state.num_bets() == 0 \
                 and has_blank_card \
                 and strength <= 7 \
-                and self.game_state.unacted_in_this_round == 1:  # We're last
+                and self.game_state.num_unacted_players() == 1:  # We're last
 
             # bet-first*blank-on-board
             return raise_action, 30
@@ -359,7 +362,7 @@ class RuleHolder:
 
         # Mediocre cards, but just 1 player. Defend against
         # attempts to steal the pot.
-        if self.game_state.num_active_players == 2 \
+        if self.game_state.num_active_players() == 2 \
                 and strength <= 7:
 
             # call*just-1-player
@@ -392,7 +395,7 @@ class RuleHolder:
             # Strongest hands, no bets yet,
             # enough players after us for someone to make the first bet.
             if self.game_state.num_bets() == 0 \
-                    and self.game_state.unacted_in_this_round >= 4 \
+                    and self.game_state.num_unacted_players() >= 4 \
                     and strength >= 0.9:
                 self.game_state.set_check_raise_in_progress()
                 return call_action, 40

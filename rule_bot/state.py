@@ -1,3 +1,4 @@
+from collections import defaultdict
 from random import random
 from enum import Enum
 
@@ -42,12 +43,9 @@ class Game:
     A game can end at any stage.
 
     Within each stage, there are up to 4 bets.
-
-    Bets to call ==
-
     """
 
-    def __init__(self, small_blind, num_players, position, hole_cards):
+    def __init__(self, small_blind, players_ids, position, hole_cards):
         self.small_blind = small_blind
         self.board = []
         self.round = Round.PreFlop
@@ -66,9 +64,10 @@ class Game:
         # 0.5 BB to call in the preflop betting.
         # self.amount_to_call_in_bb = 0.0
 
-        self.total_players_num = num_players
-        self.num_active_players = num_players
-        self.number_of_unacted_players = 0
+        self.players_history = {
+            id: defaultdict(list) for id in players_ids
+        }
+        self.folded_players = []
 
         self.max_bets = self.MAX_RAISES
 
@@ -90,10 +89,10 @@ class Game:
         else:
             raise ValueError("Cannot set blinds in the middle of the game")
 
-    def register_action(self, action, total_bet, paid_now):
+    def register_action(self, player_id, action, total_bet, paid_now):
         if action == "fold":
             action = Action(type_=ActionType.Fold)
-            self.num_active_players -= 1
+            self.folded_players.append(player_id)
         elif action == "call":
             if paid_now:
                 action = Action(type_=ActionType.Call)
@@ -104,16 +103,34 @@ class Game:
         else:
             raise ValueError(f"Invalid action {action}")
         self.actions.append(action)
+        self.players_history[player_id][self.round].append(action)
 
     def num_bets(self):
         """number of bets so far in round"""
         return sum(1 for action in self.actions if action.type_ == ActionType.Raise)
 
+    def num_players(self):
+        return len(self.players_history)
+
+    def num_active_players(self):
+        return self.num_players() - len(self.folded_players)
+
+    def num_unacted_players(self):
+        """
+        Obtain the number of players who have not yet acted in this betting round.
+        https://web.archive.org/web/20031203054314/http://spaz.ca/aaron/poker/src/poki.tar.gz
+        """
+        return sum(1 for p_id, actions in
+                   self.players_history.items()
+                   if p_id not in self.folded_players and
+                   len(actions[self.round]) == 0)
+
     def set_pot(self, amount):
         self.pot = amount
 
     def get_bet_timing(self):
-        return BetTiming.get_list(self.total_players_num)[self.position]
+        num_players = self.num_players()
+        return BetTiming.get_list(num_players)[self.position]
 
     def get_pocket_strength(self):
         pa = PocketAnalyzer(*self.hole_cards)
@@ -252,7 +269,7 @@ class Game:
 
 
 def test():
-    g = Game(1, 1, 2, [Card.parse('2h'), Card.parse('Jc')])
+    g = Game(1, ['foo'], 2, [Card.parse('2h'), Card.parse('Jc')])
     g.deal_flop(*map(Card.parse, ['Qs', 'Td', '8d']))
     g.deal_turn(Card.parse('6h'))
     g.deal_river(Card.parse('Th'))
