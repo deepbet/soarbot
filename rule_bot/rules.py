@@ -146,21 +146,29 @@ class RuleHolder:
         # If we've got excellent cards and excellent position, bet-raise as
         # much as possible.
         if self.game_state.num_bets() < self.game_state.max_bets \
-                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button] \
+                and self.game_state.get_bet_timing() == BetTiming.Blind \
                 and strength <= 2:
+            # bet-raise*excellent-both
+            return raise_action, 30
+
+        # If we've got excellent cards and excellent position, bet-raise as
+        # much as possible.
+        if self.game_state.num_bets() < self.game_state.max_bets \
+                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button] \
+                and strength <= 3:
             # bet-raise*excellent-both
             return raise_action, 30
 
         # If we've got excellent cards, bet-raise once.
         if self.game_state.num_bets() <= 1 \
-                and strength <= 2:
+                and strength <= 4:
             # bet-raise*excellent-cards
             return raise_action, 30
 
         # If we've got decent cards and excellent position, bet-raise once.
         if self.game_state.num_bets() <= 1 \
-                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button] \
-                and strength <= 3:
+                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button, BetTiming.Blind] \
+                and strength <= 5:
             # bet-raise*excellent-both
             return raise_action, 30
 

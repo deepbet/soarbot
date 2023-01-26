@@ -28,7 +28,7 @@ class PocketAnalyzer:
 
             if r1 < Rank.Ten:
                 # weak-pairs
-                return 5
+                return 3
 
         # Suited cards - both hole cards are the same suit.
         if self.high.same_suit(self.low):
@@ -43,9 +43,13 @@ class PocketAnalyzer:
                     # high-card-suited
                     return 3
 
-            # Extra value because the cards are connected.
-            if r1 == Rank.Ten and r2 == Rank.Nine:
+            # Extra value because the cards are connected (possible straight).
+            if r2.next() == r1:
                 return 3
+
+            # Extra value because the cards are connected (possible straight).
+            if r2.next().next() == r1:
+                return 4
 
         # Unpaired, unsuited
         assert self.is_pair() is None, "Pairs should be handled before"
@@ -56,14 +60,23 @@ class PocketAnalyzer:
             if r2 == Rank.King:
                 # ace-king
                 return 2
-            if r2 == Rank.Ten:
-                # ace-ten
+            if r2 in (Rank.Ten, Rank.Nine, Rank.Eight, Rank.Seven):
                 return 3
 
-        if Rank.Jack <= r1 <= Rank.Ace \
-                and Rank.Jack <= r2 <= Rank.Ace:
-            # 2-high-cards
-            return 3
+        if r1 == Rank.King:
+            if r2 in (Rank.Ten, Rank.Nine):
+                return 3
+
+        if r1 == Rank.Queen:
+            if r2 == Rank.Ten:
+                return 3
+
+        if Rank.Jack <= r1 <= Rank.Ace:
+            if Rank.Jack <= r2 <= Rank.Ace:
+                # 2-high-cards
+                return 3
+            else:
+                return 4
 
         # all the left cards are pretty-useless to go further
         return 100
