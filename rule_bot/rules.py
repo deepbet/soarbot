@@ -1,3 +1,5 @@
+import sys
+
 from .state import Round
 from .pos import BetTiming
 
@@ -369,17 +371,21 @@ class RuleHolder:
             return call_action, 20
 
     def determine_river(self):
+        strength = self.game_state.get_best_hand_probability()
+        cards = list(map(str, self.game_state.get_cards_analyzer().all_cards()))
+        print(f"HS for {cards}: {strength}", file=sys.stderr)
+
         actions = self.default_actions()
         for action in [
-            self.river_check_raise(),
-            self.river_raise(),
-            self.river_call()]:
+            self.river_check_raise(strength),
+            self.river_raise(strength),
+            self.river_call(strength)]:
             if action:
                 actions.append(action)
 
         return actions
 
-    def river_check_raise(self):
+    def river_check_raise(self, hand_strength):
         """
         If we've got the best cards, early position,
         and no bets yet, check-raise.
@@ -389,35 +395,33 @@ class RuleHolder:
             return cont
 
         call_action = self.valid_call_action()
-        strength = self.game_state.get_best_hand_probability()
 
         if not self.game_state.check_raise_used:  # Just once per game
             # Strongest hands, no bets yet,
             # enough players after us for someone to make the first bet.
             if self.game_state.num_bets() == 0 \
                     and self.game_state.num_unacted_players() >= 4 \
-                    and strength >= 0.9:
+                    and hand_strength >= 0.9:
                 self.game_state.set_check_raise_in_progress()
                 return call_action, 40
 
-    def river_raise(self):
+    def river_raise(self, hand_strength):
         raise_action = self.raise_amount()
         if raise_action[0] == 'call':
             return raise_action, 100
 
         assert raise_action[0] == 'raise'
 
-        strength = self.game_state.get_best_hand_probability()
-
         # If we have a strong hand, bet or raise.
-        if strength >= 0.9:
+        if hand_strength >= 0.9:
             # bet-raise*based-on-probability
             return raise_action, 30
 
-    def river_call(self):
+    def river_call(self, hand_strength):
         call_action = self.valid_call_action()
-
-        strength = self.game_state.get_adjusted_odds(call_action['amount'])
+        pot_odds = self.game_state.get_pot_odds(call_action['amount'])
+        strength = pot_odds * hand_strength
+        print(f"Adjusted odds is {strength}", file=sys.stderr)
 
         if strength > 1.0:
             # If we like the odds, call.

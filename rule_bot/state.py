@@ -1,10 +1,19 @@
 from collections import defaultdict
 from random import random
 from enum import Enum
+from os import path
+import sys
 
 from .pos import BetTiming
-from .cards import Card
+from .cards import Card, Suit, Rank
 from .analyze import PocketAnalyzer, CardsAnalyzer
+
+THIS_FILE = __file__
+GEN_LIB_PATH = path.join(path.dirname(path.dirname(THIS_FILE)), 'genetic', 'Poker Genetic Algorithms')
+sys.path.insert(0, GEN_LIB_PATH)
+
+from pypokerengine.engine.hand_evaluator import HandEvaluator  # noqa: E402
+from pypokerengine.engine.card import Card as EngineCard  # noqa: E402
 
 
 class Round(Enum):
@@ -55,28 +64,19 @@ class Game:
         assert len(hole_cards) == 2
         self.hole_cards = hole_cards
 
-        self.our_chips_in_pot = 0
-        self.check_raise_in_progress = False
-        self.check_raise_used = False
-
-        # The number of chips the player has to call to stay in.
-        # The type is float, not integer, because the small blind often has
-        # 0.5 BB to call in the preflop betting.
-        # self.amount_to_call_in_bb = 0.0
-
+        self.pot = 0
         self.players_history = {
             id: defaultdict(list) for id in players_ids
         }
         self.folded_players = []
 
         self.max_bets = self.MAX_RAISES
-
-        self.pot = 0
+        self.check_raise_in_progress = False
+        self.check_raise_used = False
         self.bluff = random() < self.BLUFF_PROBABILITY
 
         # sets on every round
         self.bet_size = None  # minBetSize on PreFlop, 1/2 Pot or MinBetSize on Flop, Turn, River
-        self.evaluator = None
 
     BLUFF_PROBABILITY = 0.2
     MAX_RAISES = 4  # Holdem.MAX_RAISES
@@ -196,11 +196,7 @@ class Game:
             # Probability not defined till there are board cards
             return 0.0
 
-        if self.num_active_players == 2:
-            # just 1 opponent
-            return self.evaluator(self.hole_cards, self.board)
-
-        return self.evaluator(self.hole_cards, self.board, self.num_active_players)
+        return evaluate_hand_strength(self.hole_cards, self.board, self.num_active_players())
 
     def get_potential(self, looh_ahead_1_card=False):
         """
@@ -266,6 +262,45 @@ class Game:
         If pot-odds are 2, we're getting poor odds (0.66).
         """
         return self.get_pot_odds(call_amount) * self.adjusted_probability()
+
+
+def evaluate_hand_strength(hole, board, num_players=2):
+    hole = list(map(convert_to_engine_card, hole))
+    community = list(map(convert_to_engine_card, board))
+
+    my_rank = HandEvaluator.eval_hand(hole, community)
+    deck = [c for c in generate_deck() if c not in hole and c not in board]
+
+    good, bad, tied = 0, 0, 0
+    for i, opp_h1 in enumerate(deck):
+        for opp_h2 in deck[i + 1:]:
+            opp_hole = [opp_h1, opp_h2]
+            opp_hole = list(map(convert_to_engine_card, opp_hole))
+            opp_rank = HandEvaluator.eval_hand(opp_hole, community)
+            if my_rank > opp_rank:
+                good += 1
+            elif my_rank == opp_rank:
+                tied += 1
+            else:
+                bad += 1
+
+    score = (float(good) + float(tied) / 2.0) / (float(good) + float(tied) + float(bad))
+
+    if num_players > 2:
+        return score ** (num_players - 1)
+    else:
+        return score
+
+
+def convert_to_engine_card(card):
+    s = str(card)
+    return EngineCard.from_str(s[1] + s[0])
+
+
+def generate_deck():
+    for s in Suit:
+        for r in Rank:
+            yield Card(r, s)
 
 
 def test():
