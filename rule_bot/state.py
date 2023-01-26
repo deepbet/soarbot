@@ -76,10 +76,7 @@ class Game:
         self.bluff = random() < self.BLUFF_PROBABILITY
 
         # sets on every round
-        self.best_hand_probability = None
         self.bet_size = None  # minBetSize on PreFlop, 1/2 Pot or MinBetSize on Flop, Turn, River
-        self.negative_potential = None
-        self.potential = None
         self.evaluator = None
 
     BLUFF_PROBABILITY = 0.2
@@ -234,9 +231,10 @@ class Game:
         (How good the hand is now + its chances of getting better - its
         chances of getting worse.)
         """
-        return self.best_hand_probability + self.potential - self.negative_potential
+        return self.get_best_hand_probability() + self.get_potential() - \
+               self.get_negative_potential()
 
-    def adjusted_odds(self):
+    def get_adjusted_odds(self, call_amount):
         """
         adjusted-odds - adjusted-probability * pot-odds.
 
@@ -244,7 +242,7 @@ class Game:
         For example, if adjusted-probability is 0.33 and pot-odds are 4, we're getting good odds (1.33)
         If pot-odds are 2, we're getting poor odds (0.66).
         """
-        return self.pot_odds * self.adjusted_probability()
+        return self.get_pot_odds(call_amount) * self.adjusted_probability()
 
 
 def test():
