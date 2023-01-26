@@ -120,7 +120,7 @@ class RuleHolder:
         if self.game_state.num_bets() <= 1 \
                 and self.game_state.get_bet_timing() == BetTiming.Early \
                 and strength == 1:
-            self.game_state.check_raise_in_progress = True
+            self.game_state.set_check_raise_in_progress()
             return call_action, 40
 
     def preflop_raise(self):
@@ -284,7 +284,7 @@ class RuleHolder:
             if self.game_state.num_bets() == 0 \
                     and self.game_state.unacted_in_this_round >= 4 \
                     and strength == 1:
-                self.game_state.check_raise_in_progress = True
+                self.game_state.set_check_raise_in_progress()
                 return call_action, 40
 
     def turn_raise(self):
@@ -394,7 +394,7 @@ class RuleHolder:
             if self.game_state.num_bets() == 0 \
                     and self.game_state.unacted_in_this_round >= 4 \
                     and strength >= 0.9:
-                self.game_state.check_raise_in_progress = True
+                self.game_state.set_check_raise_in_progress()
                 return call_action, 40
 
     def river_raise(self):

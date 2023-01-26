@@ -135,6 +135,8 @@ class Game:
         # noinspection PyTypeChecker
         self.round = Round(self.round.value + 1)
         self.actions = []
+        # disable check-raise when switching on the new round
+        self.check_raise_in_progress = False
 
     def deal_flop(self, c1, c2, c3):
         assert self.round == Round.PreFlop
@@ -153,11 +155,15 @@ class Game:
         assert len(self.board) == 5
         self._switch_round()
 
+    def set_check_raise_in_progress(self):
+        assert not self.check_raise_in_progress, "Already a check-raise mode"
+        self.check_raise_in_progress = True
+        self.check_raise_used = True
+
     def finish_check_raise(self):
         assert self.check_raise_in_progress, "Not a check-raise mode"
         # Clear flag
         self.check_raise_in_progress = False
-        self.check_raise_used = True
         # If there's a raise left, make it, else call.
         if self.num_bets() < self.MAX_RAISES:
             return 'raise'
