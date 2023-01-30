@@ -136,6 +136,24 @@ class Game:
         pa = PocketAnalyzer(*self.hole_cards)
         return pa.preflop_strength()
 
+    def is_small_blind(self):
+        return self.position == 1
+
+    def is_pocket_strong_for_check(self):
+        pa = PocketAnalyzer(*self.hole_cards)
+        bet_timing = self.get_bet_timing()
+        return pa.is_strong_for_check(bet_timing, self.is_small_blind())
+
+    def is_pocket_strong_for_first_raise(self):
+        pa = PocketAnalyzer(*self.hole_cards)
+        bet_timing = self.get_bet_timing()
+        return pa.is_strong_for_first_raise(bet_timing, self.is_small_blind())
+
+    def is_pocket_strong_for_second_raise(self):
+        pa = PocketAnalyzer(*self.hole_cards)
+        bet_timing = self.get_bet_timing()
+        return pa.is_strong_for_second_raise(bet_timing, self.is_small_blind())
+
     def get_cards_analyzer(self):
         return CardsAnalyzer(*self.hole_cards, *self.board)
 

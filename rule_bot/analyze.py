@@ -1,4 +1,5 @@
 from .cards import Card, Rank
+from .pos import BetTiming
 
 
 class PocketAnalyzer:
@@ -80,6 +81,338 @@ class PocketAnalyzer:
 
         # all the left cards are pretty-useless to go further
         return 100
+
+    def is_strong_for_check(self, bet_timing: BetTiming, is_small_blind=False):
+        high_r, low_r = self.high.rank, self.low.rank
+        suited = self.high.same_suit(self.low)
+        pair_r = self.is_pair()
+
+        if bet_timing == BetTiming.Blind:
+            if pair_r is not None and pair_r >= Rank.Seven:
+                return True
+            if is_small_blind:
+                if suited:
+                    if high_r == Rank.Ace:
+                        return True
+                    if high_r == Rank.King and low_r >= Rank.Six:
+                        return True
+                    if high_r >= Rank.Ten and low_r >= Rank.Eight:
+                        return True
+                    if high_r in (Rank.Nine, Rank.Eight) and low_r in (Rank.Eight, Rank.Seven):
+                        return True
+                    if high_r >= Rank.Five:
+                        if high_r == low_r.next():
+                            return True
+                else:
+                    if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                        return True
+            else:
+                if suited:
+                    if high_r >= Rank.King and low_r >= Rank.Five:
+                        return True
+
+                    if high_r >= Rank.Ten and low_r >= Rank.Eight:
+                        return True
+
+                    if high_r >= Rank.Four:
+                        if high_r == low_r.next():
+                            return True
+
+                    if Rank.Five <= high_r <= Rank.Seven:
+                        if high_r == low_r.next().next():
+                            return True
+
+                else:
+                    if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                        return True
+
+        elif bet_timing == BetTiming.Early:
+            if pair_r is not None and pair_r >= Rank.Six:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Six:
+                    return True
+                if high_r >= Rank.Ten and low_r >= Rank.Seven:
+                    return True
+                if high_r >= Rank.Five:
+                    if high_r == low_r.next():
+                        return True
+                if high_r >= Rank.Six:
+                    if high_r == low_r.next().next():
+                        return True
+                if high_r >= Rank.Eight:
+                    if high_r == low_r.next().next().next():
+                        return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+                if high_r == Rank.Ace and low_r >= Rank.Nine:
+                    return True
+
+        elif bet_timing == BetTiming.Middle:
+            if pair_r is not None and pair_r >= Rank.Six:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Five:
+                    return True
+                if high_r >= Rank.Ten and low_r >= Rank.Seven:
+                    return True
+                if high_r >= Rank.Five:
+                    if high_r == low_r.next():
+                        return True
+                if high_r >= Rank.Seven:
+                    if high_r == low_r.next().next():
+                        return True
+                if high_r >= Rank.Nine:
+                    if high_r == low_r.next().next().next():
+                        return True
+                if high_r == Rank.Ten and low_r == Rank.Six:
+                    return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+                if high_r == Rank.Ace and low_r >= Rank.Eight:
+                    return True
+
+        elif bet_timing == BetTiming.Late:
+            if pair_r is not None and pair_r >= Rank.Six:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Eight:
+                    return True
+                if high_r >= Rank.Jack and low_r >= Rank.Nine:
+                    return True
+                if high_r >= Rank.Five:
+                    if high_r == low_r.next():
+                        return True
+                if high_r >= Rank.Seven:
+                    if high_r == low_r.next().next():
+                        return True
+            else:
+                if high_r >= Rank.Queen and low_r >= Rank.Jack:
+                    return True
+
+                if high_r == Rank.Ace and low_r >= Rank.Ten:
+                    return True
+
+        elif bet_timing == BetTiming.Button:
+            if pair_r is not None and pair_r >= Rank.Six:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Four:
+                    return True
+                if high_r >= Rank.Jack and low_r >= Rank.Eight:
+                    return True
+                if high_r >= Rank.Five:
+                    if high_r == low_r.next():
+                        return True
+                if high_r >= Rank.Seven:
+                    if high_r == low_r.next().next():
+                        return True
+                if high_r == Rank.Eight and low_r == Rank.Five:
+                    return True
+            else:
+                if high_r >= Rank.Queen and low_r >= Rank.Jack:
+                    return True
+
+                if high_r == Rank.Ace and low_r >= Rank.Nine:
+                    return True
+
+        return False
+
+    def is_strong_for_first_raise(self, bet_timing: BetTiming, is_small_blind=False):
+        high_r, low_r = self.high.rank, self.low.rank
+        suited = self.high.same_suit(self.low)
+        pair_r = self.is_pair()
+
+        if bet_timing == BetTiming.Blind:
+            if is_small_blind:
+                if pair_r is not None and pair_r >= Rank.Seven:
+                    return True
+                if suited:
+                    if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                        return True
+                    if high_r in (Rank.Nine, Rank.Eight) and low_r in (Rank.Eight, Rank.Seven):
+                        return True
+                    if high_r >= Rank.Six:
+                        if high_r == low_r.next():
+                            return True
+                    if high_r >= Rank.Seven:
+                        if high_r == low_r.next().next():
+                            return True
+                    if high_r == Rank.Queen and low_r == Rank.Nine:
+                        return True
+                    if high_r == Rank.Ten and low_r == Rank.Seven:
+                        return True
+                else:
+                    if high_r >= Rank.Ten and low_r >= Rank.Nine:
+                        return True
+
+                    if high_r >= Rank.Eight:
+                        if high_r == low_r.next():
+                            return True
+            else:
+                if pair_r is not None and pair_r >= Rank.Nine:
+                    return True
+                if suited:
+                    if high_r == Rank.King and low_r >= Rank.Four:
+                        return True
+                    if high_r >= Rank.Nine and low_r >= Rank.Eight:
+                        return True
+                    if high_r >= Rank.Six:
+                        if high_r == low_r.next():
+                            return True
+                    if high_r in (Rank.Six, Rank.Seven, Rank.Nine):
+                        if high_r == low_r.next().next():
+                            return True
+                else:
+                    if high_r >= Rank.Ten and low_r >= Rank.Nine:
+                        return True
+
+        elif bet_timing == BetTiming.Early:
+            if pair_r is not None and pair_r >= Rank.Nine:
+                return True
+            if suited:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+                if high_r in (Rank.Eight, Rank.Nine):
+                    if high_r == low_r.next():
+                        return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+        else:
+            if pair_r is not None and pair_r >= Rank.Eight:
+                return True
+            if suited:
+                if high_r >= Rank.Ten and low_r >= Rank.Nine:
+                    return True
+                if high_r >= Rank.Eight:
+                    if high_r == low_r.next():
+                        return True
+                if Rank.Six <= high_r <= Rank.Nine:
+                    if high_r == low_r.next().next():
+                        return True
+                if high_r in (Rank.Eight, Rank.Nine):
+                    if high_r == low_r.next().next().next():
+                        return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+    def is_strong_for_second_raise(self, bet_timing: BetTiming, is_small_blind=False):
+        high_r, low_r = self.high.rank, self.low.rank
+        suited = self.high.same_suit(self.low)
+        pair_r = self.is_pair()
+
+        if bet_timing == BetTiming.Blind:
+            if is_small_blind:
+                if pair_r is not None and pair_r >= Rank.Eight:
+                    return True
+
+                if suited:
+                    if high_r in (Rank.King, Rank.Ace):
+                        if low_r >= Rank.Seven:
+                            return True
+                    if high_r == Rank.Queen:
+                        if low_r >= Rank.Eight:
+                            return True
+                    if high_r == Rank.Jack:
+                        if low_r >= Rank.Nine:
+                            return True
+
+                    if high_r in (Rank.Nine, Rank.Ten):
+                        if high_r in (low_r.next(), low_r.next().next()):
+                            return True
+                else:
+                    if high_r >= Rank.Queen and low_r >= Rank.Jack:
+                        return True
+            else:
+                if pair_r is not None and pair_r >= Rank.Nine:
+                    return True
+                if suited:
+                    if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                        return True
+                else:
+                    if high_r >= Rank.Queen and low_r >= Rank.Jack:
+                        return True
+
+        elif bet_timing == BetTiming.Early:
+            if pair_r is not None and pair_r >= Rank.Eight:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Six:
+                    return True
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+                if high_r >= Rank.Eight:
+                    if high_r == low_r.next():
+                        return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+        elif BetTiming == BetTiming.Middle:
+            if pair_r is not None and pair_r >= Rank.Seven:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Five:
+                    return True
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+                if high_r == Rank.Nine:
+                    if high_r == low_r.next():
+                        return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+        elif BetTiming == BetTiming.Late:
+            if pair_r is not None and pair_r >= Rank.Seven:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Four:
+                    return True
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+                if high_r == Rank.Nine:
+                    if high_r == low_r.next():
+                        return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+        elif BetTiming == BetTiming.Button:
+            if pair_r is not None and pair_r >= Rank.Seven:
+                return True
+            if suited:
+                if high_r == Rank.Ace:
+                    return True
+                if high_r == Rank.King and low_r >= Rank.Four:
+                    return True
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+            else:
+                if high_r >= Rank.Jack and low_r >= Rank.Ten:
+                    return True
+
+        return False
 
 
 class CardsAnalyzer(PocketAnalyzer):

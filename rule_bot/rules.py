@@ -82,7 +82,6 @@ class RuleHolder:
         actions = self.default_actions()
 
         for action in [
-                self.preflop_check_raise(),
                 self.preflop_call(),
                 self.preflop_raise()]:
             if action:
@@ -135,72 +134,19 @@ class RuleHolder:
 
         assert raise_action[0] == 'raise'
 
-        strength = self.game_state.get_pocket_strength()
+        if self.game_state.num_bets() == 1:
+            if self.game_state.is_pocket_strong_for_first_raise():
+                return raise_action, 30
 
-        # If we've got the best cards, bet-raise as much as possible.
-        if self.game_state.num_bets() < self.game_state.max_bets \
-                and strength == 1:
-            # bet-raise*always
-            return raise_action, 30
-
-        # If we've got excellent cards and excellent position, bet-raise as
-        # much as possible.
-        if self.game_state.num_bets() < self.game_state.max_bets \
-                and self.game_state.get_bet_timing() == BetTiming.Blind \
-                and strength <= 2:
-            # bet-raise*excellent-both
-            return raise_action, 30
-
-        # If we've got excellent cards and excellent position, bet-raise as
-        # much as possible.
-        if self.game_state.num_bets() < self.game_state.max_bets \
-                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button] \
-                and strength <= 3:
-            # bet-raise*excellent-both
-            return raise_action, 30
-
-        # If we've got excellent cards, bet-raise once.
-        if self.game_state.num_bets() <= 1 \
-                and strength <= 4:
-            # bet-raise*excellent-cards
-            return raise_action, 30
-
-        # If we've got decent cards and excellent position, bet-raise once.
-        if self.game_state.num_bets() <= 1 \
-                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button, BetTiming.Blind] \
-                and strength <= 5:
-            # bet-raise*excellent-both
-            return raise_action, 30
+        if self.game_state.num_bets() == 2:
+            if self.game_state.is_pocket_strong_for_second_raise():
+                return raise_action, 30
 
     def preflop_call(self):
         call_action = self.valid_call_action()
-
-        strength = self.game_state.get_pocket_strength()
-
-        if strength <= 3:
-            # Decent cards - worth seeing the flop.
-            return call_action, 20
-
-        # If bluff flag is set, and we have good position, call.
-        # The idea is to be less predictable by playing some cards we would
-        # normally toss.
-        if self.game_state.bluff \
-                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button]:
-            # call*bluff
-            return call_action, 20
-
-        if self.game_state.num_bets() == 1 \
-                and self.game_state.get_bet_timing() in [BetTiming.Late, BetTiming.Button] \
-                and strength <= 5:
-            # Weak pairs, strong position, low cost - try to hit trips.
-            return call_action, 20
-
-        # small blind
-        if self.game_state.position == 1 \
-                and call_action['amount'] == self.game_state.small_blind \
-                and strength <= 5:
-            # Weak pairs, small blind, half a bet - try to hit trips.
-            return call_action, 20
+        if self.game_state.num_bets() <= 2:  # only BB and at most one raise
+            if self.game_state.is_pocket_strong_for_check():
+                return call_action, 20
 
     def determine_flop(self):
         actions = self.default_actions()
