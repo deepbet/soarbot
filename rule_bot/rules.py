@@ -40,17 +40,19 @@ class RuleHolder:
         actions.append((self.valid_fold_action(), 10))
         return actions
 
-    def raise_amount(self, pot_multiplier=1):  # TODO: change to dynamic pot size
+    def raise_amount(self, pot_multiplier=1, bb=None):
         call_action = self.valid_call_action()
         raise_action = self.valid_raise_action()
         max_raise = raise_action['amount']['max']
         if max_raise > 0:
             # put a predetermined multiplier of the current pot
             pot_bet = self.game_state.pot * pot_multiplier
+            if bb is not None:
+                pot_bet = bb * pot_multiplier
             # ensure the raise is valid in the given range
             raise_amount = max(pot_bet, raise_action['amount']['min'])
             raise_amount = min(raise_amount, max_raise)
-            return raise_action['action'], raise_amount
+            return raise_action['action'], int(round(raise_amount))
         else:
             return call_action['action'], call_action['amount']
 
@@ -128,7 +130,21 @@ class RuleHolder:
             return call_action, 40
 
     def preflop_raise(self):
-        raise_action = self.raise_amount()
+        strength = self.game_state.get_pocket_strength()
+
+        if self.game_state.num_bets() <= 1:
+            if strength <= 2:
+                raise_in_bb = 3
+            else:
+                raise_in_bb = 2
+        else:
+            if strength <= 2:
+                raise_in_bb = 7
+            else:
+                raise_in_bb = 5
+
+        raise_action = self.raise_amount(raise_in_bb, bb=self.game_state.small_blind * 2)
+
         if raise_action[0] == 'call':
             return raise_action, 100
 
@@ -159,13 +175,16 @@ class RuleHolder:
         return actions
 
     def flop_raise(self):
-        raise_action = self.raise_amount()
+        strength = self.game_state.get_flop_strength()
+        if strength <= 2:
+            pots = 1
+        else:
+            pots = 0.5
+        raise_action = self.raise_amount(pot_multiplier=pots)
         if raise_action[0] == 'call':
             return raise_action, 100
 
         assert raise_action[0] == 'raise'
-
-        strength = self.game_state.get_flop_strength()
 
         # If there's a bet or raise available to make.
         # Strongest hands, whenever possible.
@@ -247,13 +266,16 @@ class RuleHolder:
                 return call_action, 40
 
     def turn_raise(self):
-        raise_action = self.raise_amount()
+        strength = self.get_turn_strength()
+        if strength <= 2:
+            pots = 1
+        else:
+            pots = 0.5
+        raise_action = self.raise_amount(pot_multiplier=pots)
         if raise_action[0] == 'call':
             return raise_action, 100
 
         assert raise_action[0] == 'raise'
-
-        strength = self.get_turn_strength()
 
         # If there's a bet or raise available to make.
         # Strongest hands, whenever possible.
