@@ -1,18 +1,25 @@
 import argparse
+import io
 import logging
 
 from . import RuleBasedPlayer
+from .deepbet_tcp import DeepBetPlayer
 
-from deepbet import DeepBetPlayer
 from pypokerengine.api.game import setup_config, start_poker
 
 
+# cache the player, do not create it every time
+PLAYER = None
+
+
 def define_players(deepbet_url):
+    global PLAYER
+    if PLAYER is None:
+        PLAYER = DeepBetPlayer(deepbet_url, search_time_ms=10_000, out=io.StringIO())
     return [
         {'name': "Rule1", 'algorithm': RuleBasedPlayer()},
         {'name': "Rule2", 'algorithm': RuleBasedPlayer()},
-        {'name': "DeepBet", 'algorithm': DeepBetPlayer(deepbet_url, search_threads=128,
-                                                       off_tree_actions_search_time_ms=10_000)},
+        {'name': "DeepBet", 'algorithm': PLAYER},
         {'name': "Rule3", 'algorithm': RuleBasedPlayer()},
         {'name': "Rule4", 'algorithm': RuleBasedPlayer()},
         {'name': "Rule5", 'algorithm': RuleBasedPlayer()},
