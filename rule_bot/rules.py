@@ -49,10 +49,12 @@ class RuleHolder:
             pot_bet = self.game_state.pot * pot_multiplier
             if bb is not None:
                 pot_bet = bb * pot_multiplier
+            if pot_multiplier < 1:
+                pot_bet = int(round(pot_bet))
             # ensure the raise is valid in the given range
             raise_amount = max(pot_bet, raise_action['amount']['min'])
             raise_amount = min(raise_amount, max_raise)
-            return raise_action['action'], int(round(raise_amount))
+            return raise_action['action'], raise_amount
         else:
             return call_action['action'], call_action['amount']
 
