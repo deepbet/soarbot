@@ -1,19 +1,13 @@
 from collections import defaultdict
 from random import random
 from enum import Enum
-from os import path
-import sys
 
 from .pos import BetTiming
 from .cards import Card, Suit, Rank
 from .analyze import PocketAnalyzer, CardsAnalyzer
 
-THIS_FILE = __file__
-GEN_LIB_PATH = path.join(path.dirname(path.dirname(THIS_FILE)), 'genetic', 'Poker Genetic Algorithms')
-sys.path.insert(0, GEN_LIB_PATH)
-
-from pypokerengine.engine.hand_evaluator import HandEvaluator  # noqa: E402
-from pypokerengine.engine.card import Card as EngineCard  # noqa: E402
+from pypokerengine.engine.hand_evaluator import HandEvaluator
+from pypokerengine.engine.card import Card as EngineCard
 
 
 class Round(Enum):

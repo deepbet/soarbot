@@ -1,16 +1,10 @@
 import argparse
 import logging
-import sys
-from os import path
 
 from . import RuleBasedPlayer
 
-THIS_FILE = __file__
-GEN_LIB_PATH = path.join(path.dirname(path.dirname(THIS_FILE)), 'genetic', 'Poker Genetic Algorithms')
-sys.path.append(GEN_LIB_PATH)
-
-from deepbet import DeepBetPlayer  # noqa: E402
-from pypokerengine.api.game import setup_config, start_poker  # noqa: E402
+from deepbet import DeepBetPlayer
+from pypokerengine.api.game import setup_config, start_poker
 
 
 def define_players(deepbet_url):

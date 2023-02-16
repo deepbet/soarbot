@@ -1,4 +1,4 @@
-PyPokerEngine
+git+https://github.com/deepbet/PyPokerEngine.git@master#egg=PyPokerEngine
 requests
 
 # tests

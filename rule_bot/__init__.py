@@ -1,17 +1,11 @@
-import sys
-from os import path
 import logging
 
 from .state import Game
 from .cards import Card
 from .rules import RuleHolder
 
-THIS_FILE = __file__
-GEN_LIB_PATH = path.join(path.dirname(path.dirname(THIS_FILE)), 'genetic', 'Poker Genetic Algorithms')
-sys.path.insert(0, GEN_LIB_PATH)
-
-from pypokerengine.api.game import BasePokerPlayer  # noqa: E402
-import pypokerengine.utils.visualize_utils as U  # noqa: E402
+from pypokerengine.api.game import BasePokerPlayer
+import pypokerengine.utils.visualize_utils as U
 
 
 class RuleBasedPlayer(BasePokerPlayer):
