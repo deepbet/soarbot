@@ -2,23 +2,29 @@ import json
 import random
 import logging
 import socket
+import sys
+import io
 import time
+from contextlib import redirect_stdout
 from threading import Thread
 
 from mutf8 import encode_modified_utf8, decode_modified_utf8
+
+from . import convert
 
 import pypokerengine.utils.visualize_utils as U
 from pypokerengine.players import BasePokerPlayer
 
 
 class DeepBetPlayer(BasePokerPlayer):
-    def __init__(self, addr, search_time_ms=None):
+    def __init__(self, addr, search_time_ms=None, out=sys.stdout):
         super().__init__()
         addr = addr.split(':', maxsplit=1)
         self.api = Api(addr, search_time_ms=search_time_ms, verbose=2)
         self.game_settings = None
         self.session_id = None
         self.game_id = None
+        self.out = out
 
     def declare_action(self, valid_actions, hole_card, round_state):
         current_round = round_state['street']
@@ -31,7 +37,8 @@ class DeepBetPlayer(BasePokerPlayer):
                 else:
                     total_paid += action.get('paid', 0)
 
-        print(U.visualize_declare_action(valid_actions, hole_card, round_state, self.uuid, show_round_state=False))
+        print(U.visualize_declare_action(valid_actions, hole_card, round_state, self.uuid, show_round_state=False),
+              file=self.out)
         action, amount = self.api.get_rts_action(self.game_id, valid_actions, total_paid)
         return action, amount
 
@@ -57,7 +64,8 @@ class DeepBetPlayer(BasePokerPlayer):
         if self.session_id is None:
             self.session_id = self.api.create_session(hero_name, len(players))
 
-        print(U.visualize_game_start(game_info, self.uuid))
+        print(U.visualize_game_start(game_info, self.uuid),
+              file=self.out)
 
     def receive_round_start_message(self, round_count, hole_card, seats):
         ids = [p['uuid'] for p in seats]
@@ -76,7 +84,8 @@ class DeepBetPlayer(BasePokerPlayer):
         private_info = [{"hole_cards": pp_to_array(hole_card), "position": player_pos + 1, "name": hero_name}]
         query = {'game_settings': self.game_settings, 'private_info': private_info}
         self.game_id = self.api.create_game(query)
-        print(U.visualize_round_start(round_count, hole_card, seats, self.uuid))
+        print(U.visualize_round_start(round_count, hole_card, seats, self.uuid),
+              file=self.out)
 
     def receive_street_start_message(self, street, round_state):
         if street == 'flop':
@@ -91,7 +100,8 @@ class DeepBetPlayer(BasePokerPlayer):
         if cards:
             self.api.deal_board_cards(self.game_id, pp_to_array(cards), street)
 
-        print(U.visualize_street_start(street, round_state, self.uuid))
+        print(U.visualize_street_start(street, round_state, self.uuid),
+              file=self.out)
 
     def receive_game_update_message(self, new_action, round_state):
         last_action = round_state['action_histories'][round_state['street']][-1]
@@ -106,12 +116,33 @@ class DeepBetPlayer(BasePokerPlayer):
                 name = p['name']
 
         self.api.register_action(self.game_id, new_action['action'], new_action['amount'], paid, name)
-        # do not print the round state
-        print(U.visualize_game_update(new_action, round_state, self.uuid, show_round_state=False))
+        print(U.visualize_game_update(new_action, round_state, self.uuid, show_round_state=False),
+              file=self.out)
 
     def receive_round_result_message(self, winners, hand_info, round_state):
+        print(U.visualize_round_result(winners, hand_info, round_state, self.uuid),
+              file=self.out)
+        self.send_history()
         self.api.delete_game(self.game_id)
-        print(U.visualize_round_result(winners, hand_info, round_state, self.uuid))
+
+    def send_history(self):
+        if type(self.out) is io.StringIO:
+            val = self.out.getvalue()
+            print(val)
+            with io.StringIO() as buf, redirect_stdout(buf):
+                try:
+                    lines = iter(val.splitlines())
+                    convert.main(lines, "DeepBet")
+                except Exception as exc:
+                    logging.error("HH failed: %r", exc)
+                else:
+                    data = buf.getvalue()
+                    self.api.send_history(data)
+
+            # https://stackoverflow.com/a/4330829
+            self.out.truncate(0)
+            self.out.seek(0)
+
 
 class Api:
     def __init__(self, addr, search_time_ms=None, verbose=0):
@@ -131,7 +162,7 @@ class Api:
         self.socket.connect((self.server_host, self.server_port))
 
         if self.verbose > 0:
-            print(f"Connecting to {self.server_host}:{self.server_port}...")
+            print(f"Connecting to {self.server_host}:{self.server_port}...", file=sys.stderr)
 
     def ping(self):
         self._send_to_socket(command="PING")
@@ -218,6 +249,9 @@ class Api:
         }
         self._send_to_socket(**data)
         return game_id
+
+    def send_history(self, data):
+        self._send_to_socket(command="HAND HISTORY", hh=data)
 
     def end_game(self):
         self._send_to_socket(command="END GAME")
