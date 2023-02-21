@@ -191,8 +191,12 @@ class Api:
                     if msg.get('command') == "ANSWER":
                         logging.warning("Received a response %r", msg)
                         self.responses[int(msg['id'])] = msg
+                    else:
+                        logging.warning("Received unknown response %r", msg)
                 except ValueError:
                     logging.warning("Received a message %r", msg)
+                    if msg.startswith('ERROR'):
+                        sys.exit(msg)
 
     HAND_ID_START = 200_000_000
 
