@@ -182,6 +182,9 @@ class Api:
             size = self.socket.recv(2)
             size = int.from_bytes(size, byteorder='big')
             logging.info(f'About to receive {size} bytes')
+            if size == 0:
+                time.sleep(0.1)
+                continue
             data = self.socket.recv(size)
             assert len(data) == size
             data = decode_modified_utf8(data)
@@ -194,9 +197,10 @@ class Api:
                     else:
                         logging.warning("Received unknown response %r", msg)
                 except ValueError:
-                    logging.warning("Received a message %r", msg)
                     if msg.startswith('ERROR'):
-                        sys.exit(msg)
+                        logging.error("Received a message %r", msg)
+                    else:
+                        logging.error("Received a message %r", msg)
 
     HAND_ID_START = 200_000_000
 
@@ -303,11 +307,16 @@ class Api:
         self._send_to_socket(**data)
         return req_id
 
+    MAX_WAIT_RESPONSE_SECONDS = 60
+
     def wait_response(self, req_id):
+        start_waiting = time.time()
         while True:
             resp = self.responses.pop(req_id, None)
             if resp is not None:
                 return resp
+            if time.time() - start_waiting > self.MAX_WAIT_RESPONSE_SECONDS:
+                raise TimeoutError(f"Waiting for {req_id} timed out ({self.MAX_WAIT_RESPONSE_SECONDS}s)")
             time.sleep(0.01)
 
     def get_response_action(self, req_id):
@@ -377,12 +386,13 @@ class Api:
         self.send_event(**data)
 
     def get_rts_action(self, game_id, valid_actions, total_paid):
-        logging.debug("Requesting strategy on %r", game_id)
+        start = time.time()
+        logging.info("Requesting strategy on %r", game_id)
 
         req_id = self.request_for_action()
         resp = self.get_response_action(req_id)
 
-        logging.info("Chosen action is %s", resp)
+        logging.info("Chosen action is %s (in %.3f s)", resp, time.time() - start)
 
         [fold_action, call_action, raise_action] = valid_actions[:3]
 
