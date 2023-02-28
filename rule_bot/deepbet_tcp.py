@@ -24,6 +24,8 @@ class DeepBetPlayer(BasePokerPlayer):
         self.game_settings = None
         self.session_id = None
         self.game_id = None
+        self.all_in_made = None
+        self.all_in_sent = False
         self.out = out
 
     def declare_action(self, valid_actions, hole_card, round_state):
@@ -39,7 +41,10 @@ class DeepBetPlayer(BasePokerPlayer):
 
         print(U.visualize_declare_action(valid_actions, hole_card, round_state, self.uuid, show_round_state=False),
               file=self.out)
-        action, amount = self.api.get_rts_action(self.game_id, valid_actions, total_paid)
+        action, amount, all_in = self.api.get_rts_action(self.game_id, valid_actions, total_paid, self.all_in_made is not None)
+        if all_in is not None:
+            logging.info("Received AllIn: %s", all_in)
+            self.all_in_made = all_in
         return action, amount
 
     def receive_game_start_message(self, game_info):
@@ -84,6 +89,8 @@ class DeepBetPlayer(BasePokerPlayer):
         private_info = [{"hole_cards": pp_to_array(hole_card), "position": player_pos + 1, "name": hero_name}]
         query = {'game_settings': self.game_settings, 'private_info': private_info}
         self.game_id = self.api.create_game(query)
+        self.all_in_made = None
+        self.all_in_sent = False
         print(U.visualize_round_start(round_count, hole_card, seats, self.uuid),
               file=self.out)
 
@@ -97,8 +104,13 @@ class DeepBetPlayer(BasePokerPlayer):
         else:
             cards = []
 
+        logging.info("Dealing cards %r on %r (round=%r)", cards, self.game_id, street)
+
         if cards:
-            self.api.deal_board_cards(self.game_id, pp_to_array(cards), street)
+            if self.all_in_made is None:
+                self.api.deal_board_cards(self.game_id, pp_to_array(cards), street)
+            else:
+                logging.warning("Ignore sending cards %s: AllIn was made", cards)
 
         print(U.visualize_street_start(street, round_state, self.uuid),
               file=self.out)
@@ -123,7 +135,19 @@ class DeepBetPlayer(BasePokerPlayer):
             logging.info("Changing to AllIn: %s", action_made)
             action_made['action'] = 'all-in'
 
-        self.api.register_action(self.game_id, action_made['action'], action_made['amount'], paid, name)
+        if uuid == self.uuid:
+            if self.all_in_sent:
+                logging.warning("AllIn was sent already, the action %s will be ignored", new_action)
+            else:
+                if self.all_in_made is not None:
+                    action_made = {'action': 'all-in', 'amount': self.all_in_made}
+                    logging.warning("AllIn will be sent: %s, but all the following actions will be ignored", action_made)
+                    self.all_in_sent = True
+
+                self.api.register_action(self.game_id, action_made['action'], action_made['amount'], paid, name)
+        else:
+            self.api.register_action(self.game_id, action_made['action'], action_made['amount'], paid, name)
+
         print(U.visualize_game_update(new_action, round_state, self.uuid, show_round_state=False),
               file=self.out)
 
@@ -396,40 +420,50 @@ class Api:
         logging.info("The action data is %r", data)
         self.send_event(**data)
 
-    def get_rts_action(self, game_id, valid_actions, total_paid):
+    def get_rts_action(self, game_id, valid_actions, total_paid, was_all_in_before=False):
         start = time.time()
         logging.info("Requesting strategy on %r", game_id)
-
-        req_id = self.request_for_action()
-        resp = self.get_response_action(req_id)
-
-        logging.info("Chosen action is %s (in %.3f s)", resp, time.time() - start)
+        all_in = None
 
         [fold_action, call_action, raise_action] = valid_actions[:3]
 
+        if was_all_in_before:
+            logging.error("Bad python engine handling: selecting Call(%s)", call_action['amount'])
+            resp = {'action': 'C', 'amount': call_action['amount']}
+        else:
+            req_id = self.request_for_action()
+            resp = self.get_response_action(req_id)
+
+        logging.info("Chosen action is %s (in %.3f s)", resp, time.time() - start)
+
         if resp['action'] == "F":
-            return fold_action['action'], fold_action['amount']
+            return fold_action['action'], fold_action['amount'], all_in
 
         if resp['action'] in ('K', 'C'):
             total_call = total_paid + float(resp['amount'])
             assert abs(total_call - call_action['amount']) < 1e-7
-            return call_action['action'], call_action['amount']
+            return call_action['action'], call_action['amount'], all_in
 
         max_raise = raise_action['amount']['max']
         if resp['action'] == "A":
+            if max_raise > 0:
+                all_in = round(resp['amount'], 5)
+            else:
+                all_in = call_action['amount']
+
             total = total_paid + float(resp['amount'])
             if max_raise > 0:
                 assert abs(total - max_raise) < 1e-7
-                return raise_action['action'], min(max_raise, total)
+                return raise_action['action'], min(max_raise, total), all_in
             else:
-                return call_action['action'], call_action['amount']
+                return call_action['action'], call_action['amount'], all_in
 
         if resp['action'] in ('B', 'R'):
             bet = total_paid + float(resp['amount'])
             if max_raise > 0:
-                return raise_action['action'], bet
+                return raise_action['action'], bet, all_in
             else:
-                return call_action['action'], call_action['amount']
+                return call_action['action'], call_action['amount'], all_in
 
         raise ValueError(f"Invalid action: {resp}")
 
