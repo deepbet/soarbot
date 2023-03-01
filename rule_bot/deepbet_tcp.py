@@ -57,8 +57,7 @@ class DeepBetPlayer(BasePokerPlayer):
                    for i, p in enumerate(game_info['seats'])]
 
         # rotate to make a Button the last in the list
-        if len(players) > 2:
-            players = players[1:] + players[:1]
+        players = players[1:] + players[:1]
 
         self.game_settings = {
             'starting_stack': game_info['rule']['initial_stack'],
@@ -373,8 +372,12 @@ class Api:
             self.send_seat(i, p['stack'], p['name'])
 
         number_of_players = len(players)
-        # the last is the dealer
-        dealer = number_of_players
+        if number_of_players == 2:
+            # Small Blind is the dealer
+            dealer = 1
+        else:
+            # the last is the dealer
+            dealer = number_of_players
 
         self.send_dealer(dealer)
 
