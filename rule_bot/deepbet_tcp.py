@@ -446,17 +446,18 @@ class Api:
 
         max_raise = raise_action['amount']['max']
         if resp['action'] == "A":
-            if max_raise > 0:
-                all_in = round(resp['amount'], 5)
-            else:
-                all_in = call_action['amount']
+            all_in = round(float(resp['amount']), 5)
 
-            total = total_paid + float(resp['amount'])
+            total = round(total_paid + all_in, 5)
             if max_raise > 0:
+                total = min(max_raise, total)
                 assert abs(total - max_raise) < 1e-7
-                return raise_action['action'], min(max_raise, total), all_in
+
+            if abs(total - call_action['amount']) < 1e-7:
+                action = call_action['action']
             else:
-                return call_action['action'], call_action['amount'], all_in
+                action = raise_action['action']
+            return action, total, all_in
 
         if resp['action'] in ('B', 'R'):
             bet = total_paid + float(resp['amount'])
