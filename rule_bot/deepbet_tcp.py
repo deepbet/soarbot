@@ -110,12 +110,20 @@ class DeepBetPlayer(BasePokerPlayer):
         paid = last_action.get('paid', last_action.get('add_amount'))
 
         name = None
+        stack = None
         uuid = new_action['player_uuid']
         for p in round_state['seats']:
             if p['uuid'] == uuid:
                 name = p['name']
+                stack = p['stack']
 
-        self.api.register_action(self.game_id, new_action['action'], new_action['amount'], paid, name)
+        action_made = {'action': new_action['action'], 'amount': new_action['amount']}
+
+        if stack == 0:
+            logging.info("Changing to AllIn: %s", action_made)
+            action_made['action'] = 'all-in'
+
+        self.api.register_action(self.game_id, action_made['action'], action_made['amount'], paid, name)
         print(U.visualize_game_update(new_action, round_state, self.uuid, show_round_state=False),
               file=self.out)
 
@@ -376,6 +384,9 @@ class Api:
         elif action == "raise":
             paid = round(paid, 5)
             return {'action': 'RAISE', 'amount': paid}
+        elif action == "all-in":
+            paid = round(paid, 5)
+            return {'action': 'ALL-IN', 'amount': paid}
 
     def register_action(self, game_id, action, amount, paid, name):
         logging.debug("Register action %r(%s, paid=%s) on %r (player=%r)", action, amount, paid, game_id, name)
