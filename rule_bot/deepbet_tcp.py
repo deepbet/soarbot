@@ -409,10 +409,16 @@ class Api:
             else:
                 return {'action': 'CHECK'}
         elif action == "raise":
-            paid = round(paid, 5)
+            if paid is None:
+                paid = 0
+            else:
+                round(paid, 5)
             return {'action': 'RAISE', 'amount': paid}
         elif action == "all-in":
-            paid = round(paid, 5)
+            if paid is None:
+                paid = 0
+            else:
+                round(paid, 5)
             return {'action': 'ALL-IN', 'amount': paid}
 
     def register_action(self, game_id, action, amount, paid, name):
