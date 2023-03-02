@@ -16,6 +16,9 @@ import pypokerengine.utils.visualize_utils as U
 from pypokerengine.players import BasePokerPlayer
 
 
+TABLE_NAME = 'TestWithRuleBot'
+
+
 class DeepBetPlayer(BasePokerPlayer):
     def __init__(self, addr, search_time_ms=None, out=sys.stdout):
         super().__init__()
@@ -163,7 +166,7 @@ class DeepBetPlayer(BasePokerPlayer):
             with io.StringIO() as buf, redirect_stdout(buf):
                 try:
                     lines = iter(val.splitlines())
-                    convert.main(lines, "DeepBet")
+                    convert.main(lines, TABLE_NAME, self.game_id)
                 except Exception as exc:
                     logging.error("HH failed: %r", exc)
                 else:
@@ -260,7 +263,7 @@ class Api:
             'sb': small_blind,
             'tableId': f"Table{table_id}",
             'tableSize': table_size,
-            'accountId': 'TestWithRuleBot',
+            'accountId': TABLE_NAME,
             'accountScreenName': player_name,
         }
         self._send_to_socket(**data)

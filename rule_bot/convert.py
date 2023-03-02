@@ -11,11 +11,12 @@ from pypokerengine.engine.hand_evaluator import HandEvaluator
 HAND_ID_START = 200_000_000
 
 
-def main(f, table_name):
+def main(f, table_name, game_id=None):
     hand_id = 0
     while True:
         try:
-            game_id = random.randrange(HAND_ID_START, HAND_ID_START * 2)
+            if not game_id:
+                game_id = random.randrange(HAND_ID_START, HAND_ID_START * 2)
             parse_hand(f, game_id, table_name)
         except StopIteration:
             print(f"{hand_id} hands processed", file=sys.stderr)
