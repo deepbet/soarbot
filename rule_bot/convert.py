@@ -66,6 +66,8 @@ def parse_hand(f, hand_id, table_name):
             _ = get_next_line(f)
             pocket, players = parse_start_players_info(f)
             assert len(players) == players_number, f"{players} != {players_number}"
+            if len(players) == 2:
+                players = players[1:] + players[:1]
             for i, (name, p_id, _) in enumerate(players, 1):
                 if p_id == hand_uuid:
                     hero = name
@@ -223,7 +225,11 @@ def print_showdown(players, contributions, folds, winners, pot,
             print(f"Pot={pot}, contrib={total_contrib}", file=sys.stderr)
     pot = precise_pot
 
-    for p, data in players.items():
+    players = list(players.items())
+    if len(players) == 2:
+        players = players[1:] + players[:1]
+
+    for p, data in players:
         if total_contrib[p] == max_contrib and uncalled:
             print(f"Uncalled bet (${uncalled}) returned to {p}")
             pot -= uncalled
@@ -243,7 +249,7 @@ def print_showdown(players, contributions, folds, winners, pot,
     # should be the same as in GameEvaluator.__calc_prize_distribution
     profit = int(pot / len(winners))
     winners_profit = dict()
-    for p, data in players.items():
+    for p, data in players:
         p_id, status, stack = data
         left = start_stack - total_contrib[p]
         assert left >= 0, contributions[p]
@@ -273,7 +279,7 @@ def print_showdown(players, contributions, folds, winners, pot,
     print(f'Board {board}')
 
     max_rank = 0
-    for i, (name, data) in enumerate(players.items(), 1):
+    for i, (name, data) in enumerate(players, 1):
         p_id, status, stack = data
 
         if status == 'folded':
@@ -313,8 +319,10 @@ def print_showdown(players, contributions, folds, winners, pot,
                         status = f"showed {pocket} and won ${profit} with {rank}"
                     else:
                         status = f"showed {pocket} and lost with {rank}"
-
-        name += POS[i]
+        if len(players) == 2:
+            name += POS[i + 1]
+        else:
+            name += POS[i]
         print(f'Seat {i}: {name} {status}')
 
     # print(players, file=sys.stderr)
