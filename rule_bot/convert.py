@@ -59,7 +59,7 @@ def parse_hand(f, hand_id, table_name):
             assert small_blind > 0, small_blind
 
             dt = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-            print(f"PokerStars Hand #{hand_id}: Hold'em No Limit (${small_blind}/${big_blind}) - {dt}")
+            print(f"RuleBot Hand #{hand_id}: Hold'em No Limit (${small_blind}/${big_blind}) - {dt}")
             print(f"Table '{table_name}' {players_number}-max Seat #1 is the button")
 
         elif re.search(r'Round \d+ start', line):

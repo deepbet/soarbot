@@ -14,6 +14,7 @@ from . import convert
 
 import pypokerengine.utils.visualize_utils as U
 from pypokerengine.players import BasePokerPlayer
+from pypokerengine.engine.card import Card
 
 
 TABLE_NAME = 'TestWithRuleBot'
@@ -156,6 +157,19 @@ class DeepBetPlayer(BasePokerPlayer):
     def receive_round_result_message(self, winners, hand_info, round_state):
         print(U.visualize_round_result(winners, hand_info, round_state, self.uuid),
               file=self.out)
+
+        for hand in hand_info:
+            player_id = hand["uuid"]
+            player_pocket = hand["hand"]["hole"]
+            player_pocket = [player_pocket['high'], player_pocket['low']]
+            pocket = list(map(str, map(Card.from_id, player_pocket)))
+            pocket = pp_to_array(pocket)
+            name = 'UNKNOWN'
+            for p in round_state["seats"]:
+                if p['uuid'] == player_id:
+                    name = p['name']
+            self.api.send_pocket(name, pocket)
+
         self.send_history()
         self.api.delete_game(self.game_id)
 
@@ -326,6 +340,18 @@ class Api:
         }
         if cards:
             data['cards'] = ','.join(map(str, cards))
+
+        self._send_to_socket(**data)
+
+    def send_pocket(self, player_name, pocket, seat=None):
+        data = {
+            'command': "EVENT",
+            'action': "SHOW CARDS",
+            'accountScreenName': player_name,
+            'cards': ','.join(map(str, pocket))
+        }
+        if seat is not None:
+            data['seat'] = int(seat)
 
         self._send_to_socket(**data)
 
