@@ -1,0 +1,7 @@
+git+https://github.com/deepbet/PyPokerEngine.git@master#egg=PyPokerEngine
+requests
+mutf8
+
+# tests
+flake8
+pytest
